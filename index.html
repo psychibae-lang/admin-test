@@ -750,7 +750,7 @@ function renderTable(){
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
     ${ch('time','TIME')}${ch('name','이름')}${ch('title','타이틀')}${ch('scale','검사명')}
-    <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th><th>링크(QR)</th>
+    <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
 }
 
@@ -784,10 +784,7 @@ function renderRow(sess,res){
       ${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프1</button>`:''}
       ${(res&&(res.scale_id==='ocir'||res.scale_id==='moci'))?`<button class="btn sm" style="margin-top:3px" onclick="openGraph2('${sess.id}','${res.scale_id||''}')">그래프2</button>`:''}
     </td>
-    <td style="white-space:nowrap">
-      <button class="btn sm" style="margin-bottom:3px" onclick="showQRById('${sess.id}')">QR</button><br>
-      <button class="btn sm" onclick="copyLinkById('${sess.id}')">링크</button>
-    </td>
+
   </tr>`;
 }
 
@@ -795,6 +792,7 @@ function doSort(col){sortCol===col?(sortDir=sortDir==='asc'?'desc':'asc'):(sortC
 
 async function savePDF(sessId,scaleId){
   const fromRowUrl=getUserBase()+"#s-"+sessId;
+  const resultUrl=location.href.split('#')[0]+'#result-'+sessId;
   const sess=allSessions.find(s=>s.id===sessId);
   const res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
   if(!sess||!res){toast('데이터를 찾을 수 없습니다.');return;}
@@ -814,8 +812,9 @@ async function savePDF(sessId,scaleId){
         const found=opts?opts.find(o=>parseInt(o[0])===val):null;
         optLabel=found?`${found[0]} ${found[1]}`:`${val}`;
       } else if(sc.hasQOpts&&sc.qOpts&&sc.qOpts[i]){
-        const found=sc.qOpts[i].find(o=>(typeof o[0]==='number'?o[0]:parseInt(o[0]))===val);
-        optLabel=found?`${found[0]} ${found[1]}`:`${val}`;
+        const numVal=Number(val);
+        const found=sc.qOpts[i].find(o=>Number(o[0])===numVal||(typeof o[0]==='number'&&o[0]===numVal));
+        optLabel=found?`${found[0]} ${found[1]}`:(val!==undefined?String(val):'미응답');
       } else if(sc.opts){
         const found=sc.opts.find(o=>parseInt(o[0])===val);
         optLabel=found?`${found[0]} ${found[1]}`:`${val}`;
@@ -854,18 +853,18 @@ async function savePDF(sessId,scaleId){
   <br>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:1rem" class="no-print">
     <button onclick="window.print()" style="padding:11px 24px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px">🖨️ 인쇄 / PDF 저장</button>
-    <div style="font-size:12px;color:#555;padding:8px 12px;background:#f0f9ff;border-radius:8px;word-break:break-all"><b>결과 확인 링크:</b><br>${fromRowUrl||''}</div>
+    <div style="font-size:12px;color:#555;padding:8px 12px;background:#f0f9ff;border-radius:8px;word-break:break-all"><b>결과 확인 링크:</b><br>${resultUrl}</div>
   </div>
   </body></html>`);w.document.close();
-  // QR 주입 (별도 스크립트로)
+  // QR 주입 (resultUrl 기반)
   var _s=w.document.createElement('script');
   _s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
   _s.onload=function(){
     var _d=w.document.createElement('div');
     _d.style.cssText='text-align:center;margin-top:8px;';
-    _d.innerHTML='<div id="_rqr"></div><p style="font-size:10px;color:#aaa">검사 링크 QR</p>';
+    _d.innerHTML='<div id="_rqr"></div><p style="font-size:10px;color:#aaa">결과 확인 QR</p>';
     w.document.body.appendChild(_d);
-    if(fromRowUrl)new QRCode(w.document.getElementById('_rqr'),{text:fromRowUrl,width:120,height:120});
+    new QRCode(w.document.getElementById('_rqr'),{text:''+resultUrl+'',width:120,height:120});
   };
   w.document.head.appendChild(_s);
 }
@@ -1007,11 +1006,54 @@ function tryParse(s){try{return JSON.parse(s);}catch{return{};}}
 function p2(n){return String(n).padStart(2,'0');}
 
 // 초기화 - DOM 로드 후 실행
-document.addEventListener('DOMContentLoaded',function(){
+document.addEventListener('DOMContentLoaded',async function(){
+  // 결과지 직접 링크: #result-세션ID
+  const hash=location.hash;
+  if(hash.startsWith('#result-')){
+    const sid=hash.slice(8);
+    await showResultPage(sid);
+    return;
+  }
   renderCatCards();
   renderScaleGrid('all');
   loadResults();
 });
+
+async function showResultPage(sid){
+  // Supabase에서 해당 세션 결과 불러와서 PDF창 열기
+  const{data:sess}=await sb.from('sessions').select('*').eq('id',sid).single();
+  const{data:results}=await sb.from('results').select('*').eq('session_id',sid);
+  if(!sess||!results||results.length===0){
+    document.body.innerHTML='<div style="text-align:center;padding:3rem;font-family:sans-serif;color:#888">결과를 찾을 수 없습니다.</div>';
+    return;
+  }
+  // 결과 요약 페이지 표시
+  const adminUrl=location.href.split('#')[0];
+  let html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>검사결과</title>';
+  html+='<style>body{font-family:sans-serif;padding:1.5rem;max-width:700px;margin:0 auto;color:#1a1a1a}';
+  html+='h1{font-size:18px;font-weight:700;border-bottom:2px solid #1a1a1a;padding-bottom:8px;margin-bottom:1rem}';
+  html+='.card{background:#f9f9f7;border-radius:10px;padding:1rem;margin-bottom:10px;border:1px solid #e8e8e8}';
+  html+='.name{font-size:15px;font-weight:600;margin-bottom:4px}.date{font-size:12px;color:#aaa;margin-bottom:12px}';
+  html+='.row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;flex-wrap:wrap}';
+  html+='.scale{font-size:12px;background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:4px;font-weight:600}';
+  html+='.score{font-size:16px;font-weight:700;color:#1d4ed8}';
+  html+='.interp{font-size:11px;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#991b1b}';
+  html+='@media print{.no-print{display:none}}</style></head><body>';
+  html+=`<h1>정신건강 검사 결과</h1>`;
+  const dt=new Date(sess.created_at);
+  const ds=`${String(dt.getFullYear()).slice(2)}${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}`;
+  html+=`<div class="card"><div class="name">${sess.patient_name||''}</div><div class="date">검사일: ${ds} · ${sess.scales?.length||0}개 검사</div>`;
+  results.forEach(r=>{
+    const sc=SCALES[r.scale_id];
+    const extra=tryParse(r.extra_scores||'{}');
+    html+=`<div class="row"><span class="scale">${sc?.name||r.scale_id}</span><span class="score">${extra.display||r.score}</span><span class="interp">${r.interp||''}</span></div>`;
+  });
+  html+='</div>';
+  html+=`<p style="font-size:11px;color:#aaa;line-height:1.7">이 결과는 담당 의사 또는 치료사에게 전달됩니다.<br>검사 결과만으로 진단이 이루어지지 않으며, 반드시 전문가 상담이 필요합니다.</p>`;
+  html+='<br><button class="no-print" onclick="window.print()" style="padding:10px 20px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">🖨️ 인쇄 / PDF 저장</button>';
+  html+='</body></html>';
+  document.open();document.write(html);document.close();
+}
 
 </script>
 </body>

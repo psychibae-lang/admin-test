@@ -850,11 +850,20 @@ async function savePDF(sessId,scaleId){
   <br>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:1rem" class="no-print">
     <button onclick="window.print()" style="padding:11px 24px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px">🖨️ 인쇄 / PDF 저장</button>
-    <div style="text-align:center"><div id="rqr"></div><p style="font-size:10px;color:#aaa;margin-top:4px">검사 링크 QR</p></div>
+    ${fromRowUrl?`<div style="font-size:12px;color:#555;padding:8px 12px;background:#f0f9ff;border-radius:8px;word-break:break-all"><b>검사 링크:</b><br>${fromRowUrl}</div>`:''}
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script>var _u="${fromRowUrl||''}";if(_u)new QRCode(document.getElementById("rqr"),{text:_u,width:120,height:120});<\/script>
   </body></html>`);w.document.close();
+  // QR 주입 (별도 스크립트로)
+  var _s=w.document.createElement('script');
+  _s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  _s.onload=function(){
+    var _d=w.document.createElement('div');
+    _d.style.cssText='text-align:center;margin-top:8px;';
+    _d.innerHTML='<div id="_rqr"></div><p style="font-size:10px;color:#aaa">검사 링크 QR</p>';
+    w.document.body.appendChild(_d);
+    if(fromRowUrl)new QRCode(w.document.getElementById('_rqr'),{text:fromRowUrl,width:120,height:120});
+  };
+  w.document.head.appendChild(_s);
 }
 
 function openGraph(url){window.open(url,'_blank');}

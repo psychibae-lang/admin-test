@@ -137,7 +137,10 @@ tr:hover td{background:#fafaf9}
       <div class="tab" onclick="switchTab('results')">결과 현황</div>
       <div class="tab" onclick="switchTab('patient')">환자별 조회</div>
     </div>
-    <button onclick="doLogout()" style="margin-left:auto;padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;color:#888">로그아웃</button>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <button onclick="downloadBackup()" style="padding:6px 14px;border:1px solid #22c55e;border-radius:8px;background:#f0fdf4;cursor:pointer;font-size:12px;color:#16a34a;font-weight:500">💾 백업</button>
+      <button onclick="doLogout()" style="padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;color:#888">로그아웃</button>
+    </div>
   </div>
 
   <div class="screen active content" id="tab-issue">
@@ -1044,6 +1047,124 @@ function doLogin(){
     document.getElementById('pw-inp').value='';
     document.getElementById('pw-inp').focus();
   }
+}
+
+
+async function downloadBackup(){
+  toast('백업 데이터 불러오는 중...');
+  
+  // Supabase에서 전체 데이터 가져오기
+  const{data:sessions}=await sb.from('sessions').select('*').order('created_at',{ascending:false});
+  const{data:results}=await sb.from('results').select('*').order('completed_at',{ascending:false});
+  
+  if(!sessions||!results){toast('데이터를 불러올 수 없습니다.');return;}
+
+  // 날짜 포맷
+  const now=new Date();
+  const ds=`${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
+  const ts=`${p2(now.getHours())}${p2(now.getMinutes())}`;
+
+  // ── CSV 1: 결과 통합 (주요 데이터) ──
+  const rows1=[
+    ['날짜','시간','환자명','타이틀','검사명','검사결과','검사해석','검사복사','COMMENT','세션ID','완료일시']
+  ];
+  // sessions와 results 조인
+  sessions.forEach(sess=>{
+    const sr=results.filter(r=>r.session_id===sess.id);
+    if(sr.length===0){
+      const dt=new Date(sess.created_at);
+      rows1.push([
+        `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}`,
+        `${p2(dt.getHours())}:${p2(dt.getMinutes())}`,
+        sess.patient_name||'',
+        sess.title||'',
+        '(미완료)','','','','',
+        sess.id,''
+      ]);
+    } else {
+      sr.forEach(r=>{
+        const sc=SCALES[r.scale_id];
+        const extra=tryParse(r.extra_scores||'{}');
+        const dt=new Date(sess.created_at);
+        const ct=r.completed_at?new Date(r.completed_at):null;
+        rows1.push([
+          `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}`,
+          `${p2(dt.getHours())}:${p2(dt.getMinutes())}`,
+          sess.patient_name||'',
+          sess.title||'',
+          sc?.name||r.scale_id,
+          extra.display||r.score||'',
+          r.interp||'',
+          (r.copy_text||'').replace(/,/g,'；').replace(/\n/g,' '),
+          (r.comment||'').replace(/,/g,'；').replace(/\n/g,' '),
+          sess.id,
+          ct?`${ct.getFullYear()}-${p2(ct.getMonth()+1)}-${p2(ct.getDate())} ${p2(ct.getHours())}:${p2(ct.getMinutes())}`:''
+        ]);
+      });
+    }
+  });
+
+  // ── CSV 2: 응답 상세 (문항별 답변) ──
+  const rows2=[
+    ['환자명','검사명','문항번호','문항내용','선택값','선택내용','세션ID','완료일시']
+  ];
+  results.forEach(r=>{
+    const sc=SCALES[r.scale_id];
+    const sess=sessions.find(s=>s.id===r.session_id);
+    const answers=r.answers||[];
+    const ct=r.completed_at?new Date(r.completed_at):null;
+    const ctStr=ct?`${ct.getFullYear()}-${p2(ct.getMonth()+1)}-${p2(ct.getDate())}`:''
+    if(sc&&sc.qs){
+      sc.qs.forEach((q,i)=>{
+        const val=answers[i];
+        let optLabel='';
+        if(sc.isDouble){
+          const opts=i%2===0?sc.optsFreq:sc.optsDist;
+          const found=opts?opts.find(o=>Number(o[0])===Number(val)):null;
+          optLabel=found?`${found[1]}`:'';
+        } else if(sc.hasQOpts&&sc.qOpts&&sc.qOpts[i]){
+          const found=sc.qOpts[i].find(o=>Number(o[0])===Number(val));
+          optLabel=found?`${found[1]}`:'';
+        } else if(sc.opts){
+          const found=sc.opts.find(o=>Number(o[0])===Number(val));
+          optLabel=found?`${found[1]}`:'';
+        }
+        rows2.push([
+          (sess?.patient_name||'').replace(/,/g,'；'),
+          sc.name,
+          i+1,
+          q.replace(/,/g,'；'),
+          val!==undefined?val:'',
+          optLabel.replace(/,/g,'；'),
+          r.session_id,
+          ctStr
+        ]);
+      });
+    }
+  });
+
+  // CSV 변환 함수
+  function toCSV(rows){
+    return '\uFEFF'+rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  }
+
+  // 다운로드 함수
+  function dlCSV(content, filename){
+    const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // 파일 2개 다운로드
+  dlCSV(toCSV(rows1), `백업_결과요약_${ds}_${ts}.csv`);
+  setTimeout(()=>{
+    dlCSV(toCSV(rows2), `백업_응답상세_${ds}_${ts}.csv`);
+    toast(`백업 완료! 파일 2개 저장됨 (${sessions.length}건)`);
+  }, 500);
 }
 
 function doLogout(){

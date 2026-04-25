@@ -103,11 +103,33 @@ tr:hover td{background:#fafaf9}
 .cat-card-items{display:flex;flex-direction:column;gap:3px}
 .cat-card-items span{font-size:12px;color:#555;display:flex;align-items:center;gap:4px}
 .cat-card-items em{font-style:normal;font-size:10px;color:#aaa;min-width:24px}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f7f7f5}
+.login-card{background:#fff;border-radius:16px;padding:2.5rem 2rem;width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.10);text-align:center}
+.login-logo{font-size:36px;margin-bottom:1rem}
+.login-card h1{font-size:20px;font-weight:700;margin-bottom:6px;color:#1a1a1a}
+.login-card p{font-size:13px;color:#888;margin-bottom:1.5rem}
+.login-inp{width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:15px;outline:none;margin-bottom:10px;transition:border 0.15s;text-align:center;letter-spacing:2px}
+.login-inp:focus{border-color:#2563eb}
+.login-err{font-size:12px;color:#ef4444;margin-bottom:8px;min-height:18px}
+.login-btn{width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.15s}
+.login-btn:hover{background:#333}
 </style>
 </head>
 <body>
 
-<div id="main-app">
+<!-- 로그인 화면 -->
+<div id="login-wrap" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">🧠</div>
+    <h1>검사 관리 시스템</h1>
+    <p>관리자 비밀번호를 입력하세요</p>
+    <input class="login-inp" type="password" id="pw-inp" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+  </div>
+</div>
+
+<div id="main-app" style="display:none">
   <div class="top-bar">
     <h1>🧠 검사 관리</h1>
     <div class="tabs">
@@ -115,6 +137,7 @@ tr:hover td{background:#fafaf9}
       <div class="tab" onclick="switchTab('results')">결과 현황</div>
       <div class="tab" onclick="switchTab('patient')">환자별 조회</div>
     </div>
+    <button onclick="doLogout()" style="margin-left:auto;padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;color:#888">로그아웃</button>
   </div>
 
   <div class="screen active content" id="tab-issue">
@@ -1006,17 +1029,40 @@ function tryParse(s){try{return JSON.parse(s);}catch{return{};}}
 function p2(n){return String(n).padStart(2,'0');}
 
 // 초기화 - DOM 로드 후 실행
+const ADMIN_PW='hanriver1000';
+
+function doLogin(){
+  const pw=document.getElementById('pw-inp').value;
+  if(pw===ADMIN_PW){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('main-app').style.display='block';
+    renderCatCards();
+    renderScaleGrid('all');
+    loadResults();
+  } else {
+    document.getElementById('login-err').textContent='비밀번호가 올바르지 않습니다.';
+    document.getElementById('pw-inp').value='';
+    document.getElementById('pw-inp').focus();
+  }
+}
+
+function doLogout(){
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('pw-inp').value='';
+  document.getElementById('login-err').textContent='';
+}
+
 document.addEventListener('DOMContentLoaded',async function(){
-  // 결과지 직접 링크: #result-세션ID
+  // 결과지 직접 링크: #result-세션ID (비번 없이 접근 가능)
   const hash=location.hash;
   if(hash.startsWith('#result-')){
     const sid=hash.slice(8);
     await showResultPage(sid);
     return;
   }
-  renderCatCards();
-  renderScaleGrid('all');
-  loadResults();
+  // 로그인 화면 표시
+  document.getElementById('pw-inp').focus();
 });
 
 async function showResultPage(sid){

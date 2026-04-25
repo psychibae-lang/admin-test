@@ -250,7 +250,7 @@ const SCALES = {
   cdi:{no:8,title:'D10',name:'CDI',cat:'dep',tag:'우울(소아)',hasQOpts:true,
     inst:'다음 각 문항에는 여러분의 느낌과 생각에 대한 것이 적혀 있습니다. 그 중에서 지난 2주 동안의 나를 가장 잘 나타내어 주는 문장을 하나 골라 주십시오.',
     comment:'27문항 0/1/2로 합산, 최고점수 54점, 22(경한우울), 26(상당한우울), 29(심한우울).',
-    qs:['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27'],
+    qs:['1. 슬픔','2. 앞일 전망','3. 일 처리','4. 흥미','5. 못됨','6. 나쁜 일 생각','7. 자기평가','8. 내 탓','9. 자살생각','10. 울고 싶음','11. 성가심','12. 사람과 있기','13. 결정','14. 외모','15. 학교 공부','16. 잠','17. 피곤함','18. 밥맛','19. 몸 걱정','20. 외로움','21. 학교생활','22. 친구','23. 학교 성적','24. 다른 아이들','25. 좋아하는 사람','26. 시킨 일','27. 사람들과 지냄'],
     qOpts:[[['1','나는 가끔 슬프다.'],['2','나는 자주 슬프다.'],['3','나는 항상 슬프다.']],[['1','나에겐 모든 일이 제대로 되어 갈 것이다.'],['2','나에게 제대로 되어 가는 일이란 없다.'],['3','나는 일이 제대로 되어갈지 확신 할 수 없다.']],[['1','나는 대체로 무슨 일이던지 웬만큼 한다.'],['2','나는 잘못하는 일이 많다.'],['3','나는 모든 일을 잘못한다.']],[['1','나는 재미있는 일들이 많다.'],['2','나는 재미있는 일들이 더러 있다.'],['3','나는 어떤 일도 전혀 재미가 없다.']],[['1','나는 가끔 못 됐다.'],['2','나는 못됐을 때 많다.'],['3','나는 언제나 못됐다.']],[['1','나는 가끔씩 나에게 나쁜 일이 일어나지 않을까 생각한다.'],['2','나는 나에게 나쁜 일이 일어날까 걱정한다.'],['3','나는 나에게 무서운 일이 일어나리라는 것을 확신한다.']],[['1','나는 나 자신을 좋아한다.'],['2','나는 나 자신을 좋아하지 않는다.'],['3','나는 나 자신을 미워한다']],[['1','잘못되는 일은 보통 내 탓이 아니다.'],['2','잘못되는 일은 보통 내 탓이 아니다.'],['3','잘못된 일은 모두 내 탓이다.']],[['1','나는 자살을 생각하지 않는다.'],['2','나는 자살에 대하여 생각은 하지만, 그렇게 하지는 않을 것이다.'],['3','나는 자살하고 싶다.']],[['1','나는 때때로 울고 싶은 기분이 든다.'],['2','나는 울고 싶은 기분인 날도 많다.'],['3','나는 매일 울고 싶은 기분이다.']],[['1','간혹 이 일 저 일로 해서 성가실 때가 있다.'],['2','이 일 저 일로 해서 성가실 때가 많다.'],['3','이 일 저 일로 해서 늘 성가시다.']],[['1','나는 사람들과 함께 있는 것이 좋다.'],['2','나는 사람들과 함께 있는 것이 싫을 때가 많다.'],['3','나는 사람들과 함께 있는 것을 전혀 원치 않는다.']],[['1','나는 쉽게 결정을 내린다.'],['2','나는 어떤 일에 대한 결정을 내릴 수가 없다.'],['3','나는 어떤 일에 대한 결정을 내리기가 어렵다.']],[['1','나는 괜찮게 생겼다.'],['2','나는 못생긴 구석이 약간 있다.'],['3','나는 못 생겼다.']],[['1','나는 별로 어렵지 않게 학교 공부를 해낼 수 있다.'],['2','나는 학교 공부를 해 내려면 많이 노력하여야만 한다.'],['3','나는 학교 공부를 해 내려면 언제나 노력하여야만 한다.']],[['1','나는 잠을 잘 잔다.'],['2','나는 잠들기 어려운 밤이 많다.'],['3','나는 매일 밤 잠들기가 어렵다.']],[['1','나는 가끔 피곤하다.'],['2','나는 자주 피곤하다.'],['3','나는 언제나 피곤하다.']],[['1','나는 밥맛이 좋다.'],['2','나는 밥맛이 없을 때가 대부분이다.'],['3','나는 밥맛이 없을 때가 많다.']],[['1','나는 몸이 쑤시고 아프다든지 하는 것에 대해 걱정하지 않는다.'],['2','나는 몸이 쑤시고 아픈 것에 대해 걱정할 때가 많다.'],['3','나는 몸이 쑤시고 아픈 것에 대해 항상 걱정한다.']],[['1','나는 외롭다고 느끼지 않는다.'],['2','나는 자주 외롭다고 느낀다.'],['3','나는 항상 외롭다고 느낀다.']],[['1','나는 학교 생활이 재미있을 때가 많다.'],['2','나는 가끔씩 학교 생활이 재미있다.'],['3','나는 학교 생활이 재미있었던 적이 없다.']],[['1','나는 친구가 많다.'],['2','나는 친구가 좀 있지만 더 있었으면 한다.'],['3','나는 친구가 하나도 없다.']],[['1','나의 학교 성적은 괜찮다.'],['2','나의 학교 성적은 예전처럼 좋지는 않다.'],['3','내가 예전에 무척 잘하던 과목에서 요즈음 성적이 뚝 떨어졌다.']],[['1','나는 다른 아이들처럼 착하다.'],['2','나는 내가 마음만 먹으면 다른 아이들처럼 착할 수가 있다.'],['3','나는 절대로 다른 아이들처럼 착할 수가 없다.']],[['1','분명히 나를 진심으로 좋아하는 사람이 있다.'],['2','나를 진심으로 좋아하는 사람이 있을지 확실하지 않다.'],['3','나를 진심으로 좋아하는 사람은 아무도 없다.']],[['1','나는 나에게 시킨 일을 대체로 한다.'],['2','나는 나에게 시킨 일을 대체로 하지 않는다.'],['3','나는 나에게 시킨 일을 절대로 하지 않는다.']],[['1','나는 사람들과 사이좋게 잘 지낸다.'],['2','나는 사람들과 잘 싸운다.'],['3','나는 사람들과 언제나 싸운다.']]],
     score(a){const s=a.reduce((t,v)=>t+(v-1),0);const interp=s<=21?'우울증아님':s<=25?'경한우울':s<=28?'상당한우울':'심한우울';return{s1:s,display:`${s}`,interp,copy:(d)=>`${d}/ CDI/ ${s}/ ${interp}`};}},
   kgds:{no:9,title:'D60',name:'KGDS',cat:'dep',tag:'우울(노인)',hasQOpts:true,
@@ -770,7 +770,7 @@ function renderRow(sess,res){
   return`<tr>
     <td style="font-size:11px;white-space:nowrap;color:#888">${ts}</td>
     <td style="font-weight:500;white-space:nowrap">${sess.patient_name||''}</td>
-    <td style="font-size:11px;white-space:nowrap;color:#555;font-weight:500">${sc?`[${sc.title}] ${sc.no}/`:sess.title||''}</td>
+    <td style="font-size:11px;white-space:nowrap;color:#555;font-weight:500">${sc?`[${sc.title}]`:sess.title||''}</td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
     <td style="font-weight:600;font-size:13px;white-space:nowrap">${res?extra.display||res.score:''}</td>
     <td style="white-space:nowrap">${res?`<span class="sev ${getSevCls(res.interp||'')}">${res.interp||''}</span>`:''}</td>
@@ -780,7 +780,10 @@ function renderRow(sess,res){
       <button class="btn sm" onclick="editComment('${resId}','${dbCommentEsc}')">편집</button>
     </td>
     <td>${res?`<button class="btn sm blue" onclick="savePDF('${sess.id}','${res.scale_id||''}')">PDF</button>`:''}</td>
-    <td>${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프</button>`:''}</td>
+    <td>
+      ${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프1</button>`:''}
+      ${(res&&(res.scale_id==='ocir'||res.scale_id==='moci'))?`<button class="btn sm" style="margin-top:3px" onclick="openGraph2('${sess.id}','${res.scale_id||''}')">그래프2</button>`:''}
+    </td>
     <td style="white-space:nowrap">
       <button class="btn sm" style="margin-bottom:3px" onclick="showQRById('${sess.id}')">QR</button><br>
       <button class="btn sm" onclick="copyLinkById('${sess.id}')">링크</button>
@@ -838,11 +841,12 @@ async function savePDF(sessId,scaleId){
   @media print{.no-print{display:none}body{padding:1rem}}</style>
   </head><body>
   <h1>정신건강 검사 결과지</h1>
-  <div class="meta"><b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''} &nbsp;|&nbsp; <b>타이틀</b>: ${sess.title||'-'}<br>
-  <b>검사명</b>: [${sc?.title||''}] ${sc?.no||''}/ ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)</div>
+  <div class="meta"><b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''}<br>
+  <b>검사명</b>: ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)</div>
   <h2>검사 결과</h2>
   <div class="result-box"><div class="score">${extra.display||res.score}</div><div><span class="sev">${res.interp||''}</span></div></div>
-  ${gUrl?`<h2>결과 그래프</h2><img src="${gUrl}" style="max-width:300px;border-radius:10px;display:block;margin-bottom:1rem" />`:''}
+  ${gUrl?`<h2>결과 그래프 1 (총점)</h2><img src="${gUrl}" style="max-width:300px;border-radius:10px;display:block;margin-bottom:1rem" />`:''}
+  ${(scaleId==='ocir'||scaleId==='moci')?`<h2>결과 그래프 2 (세부지표)</h2><img src="${getGraphUrl2(scaleId,extra)||''}" style="max-width:400px;border-radius:10px;display:block;margin-bottom:1rem" />`:''}
   <h2>COMMENT (검사해석)</h2>
   <div class="comment">${res.comment||sc?.comment||'-'}</div>
   ${res.copy_text?`<h2>검사복사 (차트기록용)</h2><div class="copy">${res.copy_text}</div>`:''}
@@ -850,7 +854,7 @@ async function savePDF(sessId,scaleId){
   <br>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:1rem" class="no-print">
     <button onclick="window.print()" style="padding:11px 24px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px">🖨️ 인쇄 / PDF 저장</button>
-    ${fromRowUrl?`<div style="font-size:12px;color:#555;padding:8px 12px;background:#f0f9ff;border-radius:8px;word-break:break-all"><b>검사 링크:</b><br>${fromRowUrl}</div>`:''}
+    <div style="font-size:12px;color:#555;padding:8px 12px;background:#f0f9ff;border-radius:8px;word-break:break-all"><b>결과 확인 링크:</b><br>${fromRowUrl||''}</div>
   </div>
   </body></html>`);w.document.close();
   // QR 주입 (별도 스크립트로)
@@ -866,7 +870,67 @@ async function savePDF(sessId,scaleId){
   w.document.head.appendChild(_s);
 }
 
+
+function getGraphUrl2(scaleId, extra){
+  // OCIR/MOCI 세부지표 그래프
+  const base='https://quickchart.io/chart?w=400&h=300&plugins=chartjs-plugin-annotation,chartjs-plugin-datalabels&bkg=rgba(240,230,255,1)&c=';
+  
+  if(scaleId==='ocir'){
+    const display=extra?.display||'';
+    const parts=display.split('/');
+    const sub=parts[1]||'';
+    const vals=sub.trim().split('-').map(v=>parseInt(v.trim())||0);
+    const [저장,확인의심,정렬,정신적중화,세척,강박생각]=[vals[0]||0,vals[1]||0,vals[2]||0,vals[3]||0,vals[4]||0,vals[5]||0];
+    const ch={type:'bar',
+      data:{labels:['저장','확인/의심','정렬','정신적중화','세척','강박생각'],
+        datasets:[{label:'점수',data:[저장,확인의심,정렬,정신적중화,세척,강박생각],
+          backgroundColor:['rgba(139,92,246,0.7)','rgba(99,102,241,0.7)','rgba(59,130,246,0.7)','rgba(16,185,129,0.7)','rgba(245,158,11,0.7)','rgba(239,68,68,0.7)'],
+          borderWidth:1}]},
+      options:{legend:{display:false},
+        title:{display:true,text:'OCIR 세부지표 (절단값: 각 4점)',fontSize:14,fontStyle:'bold'},
+        scales:{yAxes:[{ticks:{beginAtZero:true,max:12}}]},
+        plugins:{datalabels:{anchor:'end',align:'top',font:{size:14,weight:'bold'}}},
+        annotation:{annotations:[{type:'line',mode:'horizontal',scaleID:'y-axis-0',value:4,borderColor:'rgba(255,0,0,0.8)',borderWidth:2,borderDash:[4,4],label:{enabled:true,content:'절단값 4',position:'right',backgroundColor:'rgba(255,0,0,0.8)',fontColor:'#fff'}}]}}
+    };
+    return base+encodeURIComponent(JSON.stringify(ch));
+  }
+  
+  if(scaleId==='moci'){
+    const display=extra?.display||'';
+    const parts=display.split('/');
+    const sub=parts[1]||'';
+    const m=sub.match(/확인(\d+)-청결(\d+)-느림(\d+)-의심(\d+)/);
+    const [확인,청결,느림,의심]=m?[parseInt(m[1]),parseInt(m[2]),parseInt(m[3]),parseInt(m[4])]:[0,0,0,0];
+    const ch={type:'bar',
+      data:{labels:['확인','청결','느림','의심'],
+        datasets:[{label:'점수',data:[확인,청결,느림,의심],
+          backgroundColor:['rgba(99,102,241,0.7)','rgba(59,130,246,0.7)','rgba(16,185,129,0.7)','rgba(245,158,11,0.7)'],
+          borderWidth:1}]},
+      options:{legend:{display:false},
+        title:{display:true,text:'MOCI 세부지표 (확인15/청결17/느림13/의심12)',fontSize:13,fontStyle:'bold'},
+        scales:{yAxes:[{ticks:{beginAtZero:true,max:20}}]},
+        plugins:{datalabels:{anchor:'end',align:'top',font:{size:16,weight:'bold'}}},
+        annotation:{annotations:[
+          {type:'line',mode:'horizontal',scaleID:'y-axis-0',value:15,borderColor:'rgba(99,102,241,0.8)',borderWidth:2,borderDash:[4,4],label:{enabled:true,content:'확인15',position:'left',backgroundColor:'rgba(99,102,241,0.8)',fontColor:'#fff'}},
+          {type:'line',mode:'horizontal',scaleID:'y-axis-0',value:17,borderColor:'rgba(59,130,246,0.8)',borderWidth:2,borderDash:[4,4],label:{enabled:true,content:'청결17',position:'right',backgroundColor:'rgba(59,130,246,0.8)',fontColor:'#fff'}},
+          {type:'line',mode:'horizontal',scaleID:'y-axis-0',value:13,borderColor:'rgba(16,185,129,0.8)',borderWidth:2,borderDash:[4,4],label:{enabled:true,content:'느림13',position:'left',backgroundColor:'rgba(16,185,129,0.8)',fontColor:'#fff'}},
+          {type:'line',mode:'horizontal',scaleID:'y-axis-0',value:12,borderColor:'rgba(245,158,11,0.8)',borderWidth:2,borderDash:[4,4],label:{enabled:true,content:'의심12',position:'right',backgroundColor:'rgba(245,158,11,0.8)',fontColor:'#fff'}}
+        ]}}
+    };
+    return base+encodeURIComponent(JSON.stringify(ch));
+  }
+  return null;
+}
+
 function openGraph(url){window.open(url,'_blank');}
+function openGraph2(sessId,scaleId){
+  const res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
+  if(!res){toast('데이터 없음');return;}
+  const extra=tryParse(res.extra_scores||'{}');
+  const url=getGraphUrl2(scaleId,extra);
+  if(url)window.open(url,'_blank');
+  else toast('세부 그래프 없음');
+}
 
 function showQRById(sessId){
   showQR(getUserBase()+'#s-'+sessId);

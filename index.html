@@ -795,7 +795,13 @@ function renderRow(sess,res){
   const resId=res?.id||'';
   return`<tr>
     <td style="font-size:11px;white-space:nowrap;color:#888">${ts}</td>
-    <td style="font-weight:500;white-space:nowrap">${sess.patient_name||''}</td>
+    <td style="font-weight:500;white-space:nowrap">
+      <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
+        style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
+        onmouseover="this.style.background='#f0f9ff'" 
+        onmouseout="this.style.background=''"
+        title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
+    </td>
     <td style="font-size:11px;white-space:nowrap;color:#555;font-weight:500">${sc?`[${sc.title}]`:sess.title||''}</td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
     <td style="font-weight:600;font-size:13px;white-space:nowrap">${res?extra.display||res.score:''}</td>
@@ -1165,6 +1171,29 @@ async function downloadBackup(){
     dlCSV(toCSV(rows2), `백업_응답상세_${ds}_${ts}.csv`);
     toast(`백업 완료! 파일 2개 저장됨 (${sessions.length}건)`);
   }, 500);
+}
+
+async function editName(sessId, currentName, el){
+  const newName = prompt('환자 이름을 수정하세요:', currentName);
+  if(newName===null) return; // 취소
+  if(newName.trim()===''){toast('이름을 입력해주세요.');return;}
+  if(newName.trim()===currentName){return;} // 변경 없음
+  
+  // sessions 테이블 업데이트
+  const{error:e1}=await sb.from('sessions').update({patient_name:newName.trim()}).eq('id',sessId);
+  // results 테이블도 업데이트
+  const{error:e2}=await sb.from('results').update({patient_name:newName.trim()}).eq('session_id',sessId);
+  
+  if(e1||e2){
+    toast('수정 실패: '+(e1?.message||e2?.message));
+    return;
+  }
+  
+  toast(`✅ "${currentName}" → "${newName.trim()}" 수정 완료!`);
+  // 로컬 데이터도 즉시 업데이트
+  allSessions.forEach(s=>{if(s.id===sessId)s.patient_name=newName.trim();});
+  allResults.forEach(r=>{if(r.session_id===sessId)r.patient_name=newName.trim();});
+  renderTable();
 }
 
 function doLogout(){

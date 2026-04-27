@@ -822,7 +822,8 @@ function renderTable(){
   if(rows.length===0){wrap.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
-    `<th style='width:36px'><input type='checkbox' class='chk' id='chk-all' onclick='toggleAll(this)'></th>`+${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
+    <th style="width:36px"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
+    ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
     <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
 }

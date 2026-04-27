@@ -726,9 +726,8 @@ async function issueLink(type){
   if(selScales.size===0){toast('검사지를 1개 이상 선택하세요.');return;}
   const name=document.getElementById('pt-name-inp').value.trim();
   if(!name){toast('환자 이름 또는 번호를 입력하세요.');return;}
-  const title='';
   const sid='s-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
-  const{error}=await sb.from('sessions').insert({id:sid,patient_name:name,title:title||'',scales:[...selScales],status:'대기중'});
+  const{error}=await sb.from('sessions').insert({id:sid,patient_name:name,scales:[...selScales],status:'대기중'});
   if(error){toast('오류: '+error.message);return;}
   const userUrl=getUserBase()+'#s-'+sid;
   document.getElementById('link-url-txt').textContent=userUrl;
@@ -1018,7 +1017,7 @@ async function searchPatient(){
     const ds=`${String(dt.getFullYear()).slice(2)}${p2(dt.getMonth()+1)}${p2(dt.getDate())} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;
     return`<div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;border:1px solid #e8e8e8">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div><div style="font-size:14px;font-weight:600">${sess.patient_name||''} <span style="font-size:11px;color:#aaa;font-weight:400">${sess.title||''}</span></div>
+        <div><div style="font-size:14px;font-weight:600">${sess.patient_name||''} <span style="font-size:11px;color:#aaa;font-weight:400">${''}</span></div>
         <div style="font-size:11px;color:#aaa">${ds} · ${sess.scales?.length||0}개 검사</div></div>
         <span class="status-badge ${sess.status==='완료'?'s-done':'s-wait'}">${sess.status}</span>
       </div>
@@ -1099,7 +1098,7 @@ async function downloadBackup(){
         `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}`,
         `${p2(dt.getHours())}:${p2(dt.getMinutes())}`,
         sess.patient_name||'',
-        sess.title||'',
+        '',
         '(미완료)','','','','',
         sess.id,''
       ]);
@@ -1113,7 +1112,7 @@ async function downloadBackup(){
           `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}`,
           `${p2(dt.getHours())}:${p2(dt.getMinutes())}`,
           sess.patient_name||'',
-          sess.title||'',
+          '',
           sc?.name||r.scale_id,
           extra.display||r.score||'',
           r.interp||'',

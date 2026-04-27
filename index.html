@@ -746,8 +746,8 @@ let allSessions=[],allResults=[],sortCol='time',sortDir='desc';
 async function loadResults(){
   const wrap=document.getElementById('tbl-wrap');
   if(wrap)wrap.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  const{data:sess}=await sb.from('sessions').select('*').order('created_at',{ascending:false});
-  const{data:res}=await sb.from('results').select('*');
+  const{data:sess}=await sb.from('sessions').select('*').order('created_at',{ascending:false}).limit(10000);
+  const{data:res}=await sb.from('results').select('*').limit(20000);
   allSessions=sess||[];allResults=res||[];renderTable();
 }
 
@@ -840,8 +840,17 @@ function doSort(col){sortCol===col?(sortDir=sortDir==='asc'?'desc':'asc'):(sortC
 async function savePDF(sessId,scaleId){
   const fromRowUrl=getUserBase()+"#s-"+sessId;
   const resultUrl=location.href.split('#')[0]+'#result-'+sessId;
-  const sess=allSessions.find(s=>s.id===sessId);
-  const res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
+  // allSessions에서 먼저 찾고, 없으면 Supabase에서 직접 조회
+  let sess=allSessions.find(s=>s.id===sessId);
+  let res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
+  if(!sess){
+    const{data:sd}=await sb.from('sessions').select('*').eq('id',sessId).single();
+    sess=sd;
+  }
+  if(!res){
+    const{data:rd}=await sb.from('results').select('*').eq('session_id',sessId).eq('scale_id',scaleId).single();
+    res=rd;
+  }
   if(!sess||!res){toast('데이터를 찾을 수 없습니다.');return;}
   const sc=SCALES[scaleId];
   const extra=tryParse(res.extra_scores||'{}');
@@ -969,8 +978,12 @@ function getGraphUrl2(scaleId, extra){
 }
 
 function openGraph(url){window.open(url,'_blank');}
-function openGraph2(sessId,scaleId){
-  const res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
+async function openGraph2(sessId,scaleId){
+  let res=allResults.find(r=>r.session_id===sessId&&r.scale_id===scaleId);
+  if(!res){
+    const{data:rd}=await sb.from('results').select('*').eq('session_id',sessId).eq('scale_id',scaleId).single();
+    res=rd;
+  }
   if(!res){toast('데이터 없음');return;}
   const extra=tryParse(res.extra_scores||'{}');
   const url=getGraphUrl2(scaleId,extra);

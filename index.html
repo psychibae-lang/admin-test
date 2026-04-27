@@ -165,7 +165,6 @@ tr:hover td{background:#fafaf9}
 
     <div class="issue-row">
       <input class="issue-inp" id="pt-name-inp" placeholder="환자 이름 / 번호 *필수" style="flex:1;min-width:160px" />
-      <input class="issue-inp" id="pt-title-inp" placeholder="타이틀 (예: AD)" style="width:120px" />
     </div>
     <div class="issue-btns">
       <div class="iss-btn lnk" onclick="issueLink('link')">🔗 링크 발급</div>
@@ -727,7 +726,7 @@ async function issueLink(type){
   if(selScales.size===0){toast('검사지를 1개 이상 선택하세요.');return;}
   const name=document.getElementById('pt-name-inp').value.trim();
   if(!name){toast('환자 이름 또는 번호를 입력하세요.');return;}
-  const title=document.getElementById('pt-title-inp').value.trim();
+  const title='';
   const sid='s-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
   const{error}=await sb.from('sessions').insert({id:sid,patient_name:name,title:title||'',scales:[...selScales],status:'대기중'});
   if(error){toast('오류: '+error.message);return;}
@@ -785,7 +784,7 @@ function renderTable(){
     let va,vb;
     if(sortCol==='time'){va=a.sess.created_at;vb=b.sess.created_at;}
     else if(sortCol==='name'){va=a.sess.patient_name||'';vb=b.sess.patient_name||'';}
-    else if(sortCol==='title'){va=a.res?SCALES[a.res.scale_id]?.title||'':a.sess.title||'';vb=b.res?SCALES[b.res.scale_id]?.title||'':b.sess.title||'';}
+    else if(sortCol==='title'){va='';vb='';}
     else{va=a.res?.scale_id||'';vb=b.res?.scale_id||'';}
     return sortDir==='asc'?(va>vb?1:-1):(va<vb?1:-1);
   });
@@ -793,7 +792,7 @@ function renderTable(){
   if(rows.length===0){wrap.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
-    ${ch('time','TIME')}${ch('name','이름')}${ch('title','타이틀')}${ch('scale','검사명')}
+    ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
     <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
 }
@@ -820,7 +819,6 @@ function renderRow(sess,res){
         onmouseout="this.style.background=''"
         title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
     </td>
-    <td style="font-size:11px;white-space:nowrap;color:#555;font-weight:500">${sc?`[${sc.title}]`:sess.title||''}</td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
     <td style="font-weight:600;font-size:13px;white-space:nowrap">${res?extra.display||res.score:''}</td>
     <td style="white-space:nowrap">${res?`<span class="sev ${getSevCls(res.interp||'')}">${res.interp||''}</span>`:''}</td>

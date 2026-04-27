@@ -191,6 +191,14 @@ tr:hover td{background:#fafaf9}
       <select id="f-status" onchange="renderTable()">
         <option value="">전체</option><option value="완료">완료</option><option value="대기중">대기중</option>
       </select>
+      <select id="f-period" onchange="renderTable()">
+        <option value="0">전체 기간</option>
+        <option value="7">최근 7일</option>
+        <option value="30">최근 30일</option>
+        <option value="90">최근 3개월</option>
+        <option value="180">최근 6개월</option>
+        <option value="365">최근 1년</option>
+      </select>
       <button class="btn sm" onclick="loadResults()">새로고침</button>
     </div>
     <div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
@@ -750,9 +758,19 @@ function renderTable(){
   const fScale=(document.getElementById('f-scale')?.value||'').toLowerCase();
   const fStatus=document.getElementById('f-status')?.value||'';
   const now=Date.now();
+  const period=parseInt(document.getElementById('f-period')?.value||'0');
   let rows=[];
   allSessions.forEach(sess=>{
-    if(sess.status!=='완료'){const age=(now-new Date(sess.created_at).getTime())/86400000;if(age>7)return;}
+    // 기간 필터 (0=전체, 그 외 일수)
+    if(period>0){
+      const age=(now-new Date(sess.created_at).getTime())/86400000;
+      if(age>period)return;
+    }
+    // 미완료는 7일 이내만
+    if(sess.status!=='완료'){
+      const age=(now-new Date(sess.created_at).getTime())/86400000;
+      if(age>7)return;
+    }
     const sr=allResults.filter(r=>r.session_id===sess.id);
     if(sr.length===0)rows.push({sess,res:null});
     else sr.forEach(r=>rows.push({sess,res:r}));

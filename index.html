@@ -759,15 +759,15 @@ function renderTable(){
   const period=parseInt(document.getElementById('f-period')?.value||'0');
   let rows=[];
   allSessions.forEach(sess=>{
-    // 기간 필터 (0=전체, 그 외 일수)
-    if(period>0){
-      const age=(now-new Date(sess.created_at).getTime())/86400000;
-      if(age>period)return;
-    }
     // 미완료는 7일 이내만
     if(sess.status!=='완료'){
       const age=(now-new Date(sess.created_at).getTime())/86400000;
       if(age>7)return;
+    }
+    // 완료 세션: 기간 필터 적용 (0=전체)
+    if(period>0&&sess.status==='완료'){
+      const age=(now-new Date(sess.created_at).getTime())/86400000;
+      if(age>period)return;
     }
     const sr=allResults.filter(r=>r.session_id===sess.id);
     if(sr.length===0)rows.push({sess,res:null});
@@ -1027,7 +1027,6 @@ async function searchPatient(){
         const copyEsc=(r.copy_text||'').replace(/'/g,"&#39;").replace(/\n/g,' ');
         return`<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span class="sc-tag ${TAG_CLS[sc?.cat]||'tag-other'}">${sc?.name||r.scale_id}</span>
-          <span style="font-size:11px;color:#888">[${sc?.title||''}] ${sc?.no||''}/</span>
           <span style="font-weight:600;font-size:13px">${extra.display||r.score}</span>
           <span class="sev ${getSevCls(r.interp||'')}">${r.interp||''}</span>
           ${r.copy_text?`<button class="btn sm" onclick="copyText('${copyEsc}')">복사</button>`:''}

@@ -67,6 +67,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
 .filter-bar input,.filter-bar select{padding:7px 12px;border:1px solid #ddd;border-radius:7px;font-size:12px;outline:none}
 .tbl-wrap{overflow-x:auto}
+.del-bar{display:none;align-items:center;gap:10px;padding:8px 12px;background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin-bottom:10px}
+.del-bar.show{display:flex}
+.del-count{font-size:13px;color:#dc2626;font-weight:500}
+.chk{width:15px;height:15px;cursor:pointer;accent-color:#dc2626}
+
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:1050px}
 th{text-align:left;padding:9px 10px;font-weight:500;font-size:11px;color:#888;border-bottom:1px solid #ebebeb;white-space:nowrap;background:#fafaf9;cursor:pointer;user-select:none}
 th:hover{color:#1a1a1a}
@@ -199,6 +204,11 @@ tr:hover td{background:#fafaf9}
         <option value="365">최근 1년</option>
       </select>
       <button class="btn sm" onclick="loadResults()">새로고침</button>
+    </div>
+    <div class="del-bar" id="del-bar">
+      <span class="del-count" id="del-count">0개 선택됨</span>
+      <button class="btn sm" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+      <button class="btn sm" onclick="clearSelection()">취소</button>
     </div>
     <div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
   </div>
@@ -812,7 +822,7 @@ function renderTable(){
   if(rows.length===0){wrap.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
-    ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
+    `<th style='width:36px'><input type='checkbox' class='chk' id='chk-all' onclick='toggleAll(this)'></th>`+${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
     <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
 }
@@ -830,7 +840,9 @@ function renderRow(sess,res){
   const copyEsc=copy.replace(/'/g,"&#39;").replace(/\n/g,' ');
   const dbCommentEsc=dbComment.replace(/'/g,"&#39;").replace(/\n/g,' ');
   const resId=res?.id||'';
+  const rowKey=sess.id+(res?.scale_id||'');
   return`<tr>
+    <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' onchange='updateDelBar()'></td>
     <td style="font-size:11px;white-space:nowrap;color:#888">${ts}</td>
     <td style="font-weight:500;white-space:nowrap">
       <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
@@ -1242,6 +1254,97 @@ async function editName(sessId, currentName, el){
   allSessions.forEach(s=>{if(s.id===sessId)s.patient_name=newName.trim();});
   allResults.forEach(r=>{if(r.session_id===sessId)r.patient_name=newName.trim();});
   renderTable();
+}
+
+let selectedKeys=new Set();
+
+function toggleAll(el){
+  document.querySelectorAll('.row-chk').forEach(chk=>{
+    chk.checked=el.checked;
+  });
+  updateDelBar();
+}
+
+function updateDelBar(){
+  selectedKeys.clear();
+  document.querySelectorAll('.row-chk:checked').forEach(chk=>{
+    selectedKeys.add(chk.dataset.key+'|'+chk.dataset.sess+'|'+chk.dataset.scale);
+  });
+  const bar=document.getElementById('del-bar');
+  const cnt=document.getElementById('del-count');
+  if(selectedKeys.size>0){
+    bar.classList.add('show');
+    cnt.textContent=selectedKeys.size+'개 선택됨';
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function clearSelection(){
+  document.querySelectorAll('.row-chk').forEach(chk=>chk.checked=false);
+  const all=document.getElementById('chk-all');
+  if(all)all.checked=false;
+  selectedKeys.clear();
+  document.getElementById('del-bar').classList.remove('show');
+}
+
+async function deleteSelected(){
+  if(selectedKeys.size===0)return;
+  
+  // 비번 확인
+  const pw=prompt('⚠️ 삭제는 되돌릴 수 없습니다!\n관리자 비밀번호를 입력하세요:');
+  if(pw===null)return;
+  if(pw!==ADMIN_PW){toast('비밀번호가 올바르지 않습니다.');return;}
+  
+  // 최종 경고
+  const ok=confirm(`⚠️ 경고!\n선택한 ${selectedKeys.size}개 데이터를 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다!\n정말 삭제하시겠습니까?`);
+  if(!ok)return;
+  
+  toast('삭제 중...');
+  
+  // sessId별로 묶기
+  const sessToDelete=new Set();
+  const resToDelete=[]; // {sessId, scaleId}
+  
+  selectedKeys.forEach(k=>{
+    const parts=k.split('|');
+    const sessId=parts[1];
+    const scaleId=parts[2];
+    if(scaleId){
+      resToDelete.push({sessId,scaleId});
+    } else {
+      sessToDelete.add(sessId);
+    }
+  });
+  
+  let errCount=0;
+  
+  // results 삭제
+  for(const {sessId,scaleId} of resToDelete){
+    const{error}=await sb.from('results').delete().eq('session_id',sessId).eq('scale_id',scaleId);
+    if(error)errCount++;
+  }
+  
+  // results 없는 sessions 삭제 (미완료 세션)
+  for(const sessId of sessToDelete){
+    await sb.from('results').delete().eq('session_id',sessId);
+    const{error}=await sb.from('sessions').delete().eq('id',sessId);
+    if(error)errCount++;
+  }
+  
+  // results 삭제 후 해당 session에 results가 없으면 session도 삭제
+  const deletedSessIds=new Set(resToDelete.map(r=>r.sessId));
+  for(const sessId of deletedSessIds){
+    const{data:remaining}=await sb.from('results').select('id').eq('session_id',sessId).limit(1);
+    if(!remaining||remaining.length===0){
+      await sb.from('sessions').delete().eq('id',sessId);
+    }
+  }
+  
+  clearSelection();
+  if(errCount>0){toast(`일부 삭제 실패 (${errCount}건)`);}
+  else{toast(`✅ ${selectedKeys.size}개 삭제 완료!`);}
+  await loadResults();
 }
 
 function doLogout(){

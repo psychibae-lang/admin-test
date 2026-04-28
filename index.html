@@ -190,15 +190,15 @@ tr:hover td{background:#fafaf9}
 
   <div class="screen content" id="tab-results">
     <div class="filter-bar">
-      <input id="f-name" placeholder="이름/번호 검색" oninput="renderTable()" />
+      <input id="f-name" placeholder="이름/번호 검색" oninput="debounceSearch()" />
       <input id="f-scale" placeholder="검사명 검색" oninput="renderTable()" />
       <select id="f-status" onchange="renderTable()">
         <option value="">전체</option><option value="완료">완료</option><option value="대기중">대기중</option>
       </select>
-      <select id="f-period" onchange="renderTable()">
+      <select id="f-period" onchange="loadResults()">
         <option value="0">전체 기간</option>
         <option value="7">최근 7일</option>
-        <option value="30">최근 30일</option>
+        <option value="30" selected>최근 30일</option>
         <option value="90">최근 3개월</option>
         <option value="180">최근 6개월</option>
         <option value="365">최근 1년</option>
@@ -756,29 +756,25 @@ let allSessions=[],allResults=[],sortCol='time',sortDir='desc';
 async function loadResults(){
   const wrap=document.getElementById('tbl-wrap');
   if(wrap)wrap.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  
-  // sessions 전체 로드 (페이지네이션)
-  let allSess=[],from=0,batchSize=1000;
-  while(true){
-    const{data:batch}=await sb.from('sessions').select('*').order('created_at',{ascending:false}).range(from,from+batchSize-1);
-    if(!batch||batch.length===0)break;
-    allSess=[...allSess,...batch];
-    if(batch.length<batchSize)break;
-    from+=batchSize;
+  const fName=(document.getElementById('f-name')?.value||'').trim();
+  const fScale=(document.getElementById('f-scale')?.value||'').trim();
+  const period=parseInt(document.getElementById('f-period')?.value||'30');
+
+  if(fName){
+    // 이름 검색: DB에서 직접 조회
+    const{data:sess}=await sb.from('sessions').select('*').ilike('patient_name','%'+fName+'%').order('created_at',{ascending:false}).limit(200);
+    const ids=(sess||[]).map(s=>s.id);
+    const{data:res}=ids.length>0?await sb.from('results').select('*').in('session_id',ids):{data:[]};
+    allSessions=sess||[];allResults=res||[];
+  } else {
+    // 기본: 기간 필터로 로드
+    const days=period||30;
+    const since=new Date(Date.now()-days*86400000).toISOString();
+    const{data:sess}=await sb.from('sessions').select('*').gte('created_at',since).order('created_at',{ascending:false}).limit(500);
+    const ids=(sess||[]).map(s=>s.id);
+    const{data:res}=ids.length>0?await sb.from('results').select('*').in('session_id',ids):{data:[]};
+    allSessions=sess||[];allResults=res||[];
   }
-  
-  // results 전체 로드 (페이지네이션)
-  let allRes=[],from2=0;
-  while(true){
-    const{data:batch}=await sb.from('results').select('*').range(from2,from2+batchSize-1);
-    if(!batch||batch.length===0)break;
-    allRes=[...allRes,...batch];
-    if(batch.length<batchSize)break;
-    from2+=batchSize;
-  }
-  
-  allSessions=allSess;allResults=allRes;
-  console.log('로드 완료: sessions='+allSessions.length+', results='+allResults.length);
   renderTable();
 }
 
@@ -794,11 +790,6 @@ function renderTable(){
     if(sess.status!=='완료'){
       const age=(now-new Date(sess.created_at).getTime())/86400000;
       if(age>7)return;
-    }
-    // 완료 세션: 기간 필터 적용 (0=전체)
-    if(period>0&&sess.status==='완료'){
-      const age=(now-new Date(sess.created_at).getTime())/86400000;
-      if(age>period)return;
     }
     const sr=allResults.filter(r=>r.session_id===sess.id);
     if(sr.length===0)rows.push({sess,res:null});
@@ -1346,6 +1337,13 @@ async function deleteSelected(){
   if(errCount>0){toast(`일부 삭제 실패 (${errCount}건)`);}
   else{toast(`✅ ${selectedKeys.size}개 삭제 완료!`);}
   await loadResults();
+}
+
+
+let _searchTimer=null;
+function debounceSearch(){
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(()=>loadResults(),600);
 }
 
 function doLogout(){

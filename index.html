@@ -819,8 +819,9 @@ function renderTable(){
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')" draggable="true">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
     <th style="width:36px"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
-    ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
+    ${ch('scale','검사명')}
     <th draggable="true">검사결과</th><th draggable="true">검사해석</th><th draggable="true">검사복사</th><th draggable="true">COMMENT</th><th draggable="true">저장</th><th draggable="true">그래프</th>
+    ${ch('time','TIME')}${ch('name','이름')}
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
   setTimeout(initColDrag,100);
 }
@@ -861,16 +862,126 @@ function renderRow(sess,res){
       <div style="font-size:11px;color:#555;line-height:1.5;margin-bottom:3px">${dbComment||scComment.slice(0,50)+(scComment.length>50?'…':'')}</div>
       <button class="btn sm" onclick="editComment('${resId}','${dbCommentEsc}')">편집</button>
     </td>
-    <td>${res?`<button class="btn sm blue" onclick="savePDF('${sess.id}','${res.scale_id||''}')">PDF</button>`:''}</td>
+    <td>${res?`<button class="btn sm blue" onclick="saveSessionPDF('${sess.id}')">PDF</button>`:''}</td>
     <td>
       ${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프1</button>`:''}
       ${(res&&(res.scale_id==='ocir'||res.scale_id==='moci'))?`<button class="btn sm" style="margin-top:3px" onclick="openGraph2('${sess.id}','${res.scale_id||''}')">그래프2</button>`:''}
     </td>
-
+    <td style="font-size:11px;white-space:nowrap;color:#888">
+      ${ts}<br>
+      <button class="btn sm" style="margin-top:3px;font-size:10px;color:#2563eb;border-color:#bfdbfe" onclick="copySessionAll('${sess.id}')">전체복사</button>
+    </td>
+    <td style="font-weight:500;white-space:nowrap">
+      <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)" style="cursor:pointer" title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
+    </td>
   </tr>`;
 }
 
 function doSort(col){sortCol===col?(sortDir=sortDir==='asc'?'desc':'asc'):(sortCol=col,sortDir='asc');renderTable();}
+
+async function saveSessionPDF(sessId){
+  let sess=allSessions.find(s=>s.id===sessId);
+  if(!sess){
+    const{data:sd}=await sb.from('sessions').select('*').eq('id',sessId).single();
+    sess=sd;
+  }
+  let results=allResults.filter(r=>r.session_id===sessId);
+  if(results.length===0){
+    const{data:rd}=await sb.from('results').select('*').eq('session_id',sessId);
+    results=rd||[];
+  }
+  if(!sess||results.length===0){toast('데이터를 찾을 수 없습니다.');return;}
+  
+  const dt=new Date(results[0]?.completed_at||sess.created_at);
+  const dateStr=String(dt.getFullYear()).slice(2)+p2(dt.getMonth()+1)+p2(dt.getDate());
+  const resultUrl=location.href.split('#')[0]+'#result-'+sessId;
+  const qrUrl='https://quickchart.io/qr?text='+encodeURIComponent(resultUrl)+'&size=120';
+  
+  // 검사 순서대로 정렬
+  const order=['asrs','cape15','phq9','cesd','qids','bdi','ids','cdi','kgds','mdq','hads','acq','appq','pdss','rfl','fne','ocir','moci','docs','mast','pcl5','ies'];
+  results.sort((a,b)=>order.indexOf(a.scale_id)-order.indexOf(b.scale_id));
+  
+  let allSections='';
+  for(const res of results){
+    const sc=SCALES[res.scale_id];
+    const extra=tryParse(res.extra_scores||'{}');
+    const gUrl=getGraphUrl(res.scale_id,extra);
+    const gUrl2=getGraphUrl2(res.scale_id,extra);
+    const answers=res.answers||[];
+    let qaHtml='';
+    if(sc&&sc.qs){
+      sc.qs.forEach((q,i)=>{
+        const val=answers[i];
+        let optLabel='';
+        if(sc.isDouble){
+          const opts=i%2===0?sc.optsFreq:sc.optsDist;
+          const found=opts?opts.find(o=>Number(o[0])===Number(val)):null;
+          optLabel=found?`${found[0]} ${found[1]}`:(val!==undefined?String(val):'미응답');
+        } else if(sc.hasQOpts&&sc.qOpts&&sc.qOpts[i]){
+          const found=sc.qOpts[i].find(o=>Number(o[0])===Number(val));
+          optLabel=found?`${found[0]} ${found[1]}`:(val!==undefined?String(val):'미응답');
+        } else if(sc.opts){
+          const found=sc.opts.find(o=>Number(o[0])===Number(val));
+          optLabel=found?`${found[0]} ${found[1]}`:(val!==undefined?String(val):'미응답');
+        }
+        qaHtml+=`<div class="qa"><div class="q">${q}</div><div class="a">→ ${optLabel}</div></div>`;
+      });
+    }
+    allSections+=`
+    <div class="section">
+      <h2>${sc?.name||res.scale_id} 결과</h2>
+      <div class="result-box"><div class="score">${extra.display||res.score}</div><div><span class="sev">${res.interp||''}</span></div></div>
+      ${gUrl?`<img src="${gUrl}" style="max-width:300px;border-radius:10px;display:block;margin:10px 0" />`:''}
+      ${gUrl2?`<img src="${gUrl2}" style="max-width:380px;border-radius:10px;display:block;margin:10px 0" />`:''}
+      <h3>COMMENT</h3><div class="comment">${res.comment||sc?.comment||'-'}</div>
+      ${res.copy_text?`<h3>검사복사</h3><div class="copy">${res.copy_text}</div>`:''}
+      <h3>응답지 (${sc?.qs?.length||0}문항)</h3>${qaHtml}
+    </div>`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${sess.patient_name||''}_${dateStr}</title>
+  <style>
+  body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding:2rem;max-width:720px;margin:0 auto;font-size:13px;line-height:1.7;color:#1a1a1a}
+  .top-bar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #1a1a1a}
+  .top-bar h1{font-size:20px;font-weight:700;margin:0 0 6px}
+  .meta{font-size:12px;color:#666;line-height:2}
+  .print-btn{padding:12px 28px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:600;display:block;margin-bottom:1rem}
+  h2{font-size:15px;font-weight:600;margin:16px 0 8px;color:#1d4ed8;border-bottom:1px solid #dbeafe;padding-bottom:4px}
+  h3{font-size:13px;font-weight:600;margin:12px 0 6px;color:#333}
+  .result-box{background:#f0f7ff;border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:2rem;margin:8px 0}
+  .score{font-size:28px;font-weight:800;color:#1d4ed8}
+  .sev{display:inline-block;padding:4px 14px;border-radius:20px;background:#fee2e2;color:#991b1b;font-weight:600}
+  .qa{border-bottom:1px solid #f0f0f0;padding:6px 0}
+  .q{font-size:13px;font-weight:500;margin-bottom:2px}
+  .a{font-size:13px;color:#2563eb;padding-left:14px;font-weight:500}
+  .comment{background:#fffbeb;border-radius:8px;padding:10px 14px;font-size:12px;color:#555;line-height:1.7}
+  .copy{background:#f0f4ff;border-radius:8px;padding:8px 12px;font-size:11px;font-family:monospace;word-break:break-all}
+  .section{margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #f0f0f0}
+  .qr-box{text-align:center}
+  .qr-box p{font-size:10px;color:#aaa;margin-top:4px}
+  @media print{.no-print{display:none}body{padding:1rem}.section{page-break-inside:avoid}}
+  </style></head><body>
+  <div class="top-bar">
+    <div>
+      <button class="print-btn no-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+      <div class="meta">
+        <b>환자</b>: ${sess.patient_name||''} &nbsp;|&nbsp; <b>날짜</b>: ${dateStr}<br>
+        <b>검사수</b>: ${results.length}개
+      </div>
+    </div>
+    <div class="qr-box no-print">
+      <img src="${qrUrl}" width="110" height="110" style="border-radius:8px" />
+      <p>결과 확인 QR</p>
+    </div>
+  </div>
+  ${allSections}
+  </body></html>`;
+  
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
 
 async function savePDF(sessId,scaleId){
   const fromRowUrl=getUserBase()+"#s-"+sessId;
@@ -941,6 +1052,10 @@ async function savePDF(sessId,scaleId){
       <p style="font-size:10px;color:#aaa;margin-top:4px">결과 확인 QR</p>
       <p style="font-size:10px;color:#2563eb;word-break:break-all;max-width:180px">${resultUrl}</p>
     </div>
+  </div>
+  <div class="no-print" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center">
+    <button onclick="window.print()" style="padding:12px 28px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:600">🖨️ 인쇄 / PDF 저장</button>
+    <span style="font-size:12px;color:#aaa">↑ 클릭 후 PDF로 저장하세요</span>
   </div>
   <h2>검사 결과</h2>
   <div class="result-box"><div class="score">${extra.display||res.score}</div><div><span class="sev">${res.interp||''}</span></div></div>

@@ -940,7 +940,11 @@ async function saveSessionPDF(sessId){
   }
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>${sess.patient_name||''}_${dateStr}</title>
+  <title>${(()=>{
+    const names=results.map(r=>SCALES[r.scale_id]?.name||r.scale_id);
+    const nm=names.length<=2?names.join('_'):(names.slice(0,2).join('_')+'_기타검사');
+    return (sess.patient_name||'')+'_'+nm+'_'+dateStr;
+  })()}</title>
   <style>
   body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding:2rem;max-width:720px;margin:0 auto;font-size:13px;line-height:1.7;color:#1a1a1a}
   .top-bar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #1a1a1a}

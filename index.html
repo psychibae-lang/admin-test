@@ -81,6 +81,11 @@ tr:hover td{background:#fafaf9}
 .sev-n{background:#d1fae5;color:#065f46}.sev-m{background:#fef3c7;color:#92400e}
 .sev-mo{background:#ffedd5;color:#9a3412}.sev-s{background:#fee2e2;color:#991b1b}
 .sort-asc::after{content:' ↑'}.sort-desc::after{content:' ↓'}
+th.dragging{opacity:0.4;background:#dbeafe}
+th.drag-over{border-left:3px solid #2563eb}
+th[draggable]{cursor:grab}
+th[draggable]:active{cursor:grabbing}
+
 
 /* 모달/기타 */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100}
@@ -811,12 +816,13 @@ function renderTable(){
   });
   const wrap=document.getElementById('tbl-wrap');
   if(rows.length===0){wrap.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
-  const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')">${lbl}</th>`;
+  const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')" draggable="true">${lbl}</th>`;
   wrap.innerHTML=`<table><thead><tr>
     <th style="width:36px"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
     ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
     <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
+  setTimeout(initColDrag,100);
 }
 
 function renderRow(sess,res){
@@ -835,7 +841,11 @@ function renderRow(sess,res){
   const rowKey=sess.id+(res?.scale_id||'');
   return`<tr>
     <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' onchange='updateDelBar()'></td>
-    <td style="font-size:11px;white-space:nowrap;color:#888">${ts}</td>
+    <td style="font-size:11px;white-space:nowrap;color:#888">
+      ${ts}<br>
+      <button class="btn sm" style="margin-top:3px;font-size:10px;color:#2563eb;border-color:#bfdbfe" 
+        onclick="copySessionAll('${sess.id}')">전체복사</button>
+    </td>
     <td style="font-weight:500;white-space:nowrap">
       <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
         style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
@@ -921,8 +931,12 @@ async function savePDF(sessId,scaleId){
   @media print{.no-print{display:none}body{padding:1rem}}</style>
   </head><body>
   <h1>정신건강 검사 결과지</h1>
-  <div class="meta"><b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''}<br>
-  <b>검사명</b>: ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)</div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:1rem">
+    <div class="meta" style="margin:0"><b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''}<br>
+    <b>검사명</b>: ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)<br>
+    <span style="font-size:11px;color:#aaa">결과링크: ${resultUrl}</span></div>
+    <div style="text-align:center" class="no-print"><div id="top-rqr"></div><p style="font-size:10px;color:#aaa;margin-top:4px">결과 QR</p></div>
+  </div>
   <h2>검사 결과</h2>
   <div class="result-box"><div class="score">${extra.display||res.score}</div><div><span class="sev">${res.interp||''}</span></div></div>
   ${gUrl?`<h2>결과 그래프 1 (총점)</h2><img src="${gUrl}" style="max-width:300px;border-radius:10px;display:block;margin-bottom:1rem" />`:''}
@@ -1339,6 +1353,55 @@ async function deleteSelected(){
   await loadResults();
 }
 
+
+async function copySessionAll(sessId){
+  // 해당 세션의 모든 results copy_text 합치기
+  let results=allResults.filter(r=>r.session_id===sessId&&r.copy_text);
+  if(results.length===0){
+    // 메모리에 없으면 DB에서 조회
+    const{data:res}=await sb.from('results').select('*').eq('session_id',sessId);
+    results=(res||[]).filter(r=>r.copy_text);
+  }
+  if(results.length===0){toast('복사할 데이터가 없습니다.');return;}
+  
+  // 검사 번호 순으로 정렬
+  const order=['asrs','cape15','phq9','cesd','qids','bdi','ids','cdi','kgds','mdq','hads','acq','appq','pdss','rfl','fne','ocir','moci','docs','mast','pcl5','ies'];
+  results.sort((a,b)=>order.indexOf(a.scale_id)-order.indexOf(b.scale_id));
+  
+  const allText=results.map(r=>r.copy_text).join('\n');
+  navigator.clipboard.writeText(allText).then(()=>{
+    toast('✅ '+results.length+'개 검사 전체 복사 완료!');
+  });
+}
+
+// 컬럼 드래그 순서 변경
+let dragSrcCol=null;
+function initColDrag(){
+  const ths=document.querySelectorAll('#tbl-wrap th[draggable]');
+  ths.forEach(th=>{
+    th.addEventListener('dragstart',e=>{dragSrcCol=th;th.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    th.addEventListener('dragend',e=>{th.classList.remove('dragging');document.querySelectorAll('th').forEach(t=>t.classList.remove('drag-over'));});
+    th.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';th.classList.add('drag-over');});
+    th.addEventListener('dragleave',e=>{th.classList.remove('drag-over');});
+    th.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(dragSrcCol===th)return;
+      const tbl=th.closest('table');
+      const ths=Array.from(tbl.querySelectorAll('th'));
+      const srcIdx=ths.indexOf(dragSrcCol);
+      const tgtIdx=ths.indexOf(th);
+      // 모든 행 재정렬
+      tbl.querySelectorAll('tr').forEach(row=>{
+        const cells=Array.from(row.children);
+        if(cells[srcIdx]&&cells[tgtIdx]){
+          if(srcIdx<tgtIdx){row.insertBefore(cells[srcIdx],cells[tgtIdx].nextSibling);}
+          else{row.insertBefore(cells[srcIdx],cells[tgtIdx]);}
+        }
+      });
+      th.classList.remove('drag-over');
+    });
+  });
+}
 
 let _searchTimer=null;
 function debounceSearch(){

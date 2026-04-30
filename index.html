@@ -820,7 +820,7 @@ function renderTable(){
   wrap.innerHTML=`<table><thead><tr>
     <th style="width:36px"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
     ${ch('time','TIME')}${ch('name','이름')}${ch('scale','검사명')}
-    <th>검사결과</th><th>검사해석</th><th>검사복사</th><th>COMMENT</th><th>저장</th><th>그래프</th>
+    <th draggable="true">검사결과</th><th draggable="true">검사해석</th><th draggable="true">검사복사</th><th draggable="true">COMMENT</th><th draggable="true">저장</th><th draggable="true">그래프</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
   setTimeout(initColDrag,100);
 }
@@ -931,11 +931,16 @@ async function savePDF(sessId,scaleId){
   @media print{.no-print{display:none}body{padding:1rem}}</style>
   </head><body>
   <h1>정신건강 검사 결과지</h1>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:1rem">
-    <div class="meta" style="margin:0"><b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''}<br>
-    <b>검사명</b>: ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)<br>
-    <span style="font-size:11px;color:#aaa">결과링크: ${resultUrl}</span></div>
-    <div style="text-align:center" class="no-print"><div id="top-rqr"></div><p style="font-size:10px;color:#aaa;margin-top:4px">결과 QR</p></div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+    <div class="meta" style="margin:0">
+      <b>시행날짜</b>: ${dateStr} &nbsp;|&nbsp; <b>환자</b>: ${sess.patient_name||''}<br>
+      <b>검사명</b>: ${sc?.name||scaleId} (${sc?.qs?.length||0}문항)
+    </div>
+    <div style="text-align:center" class="no-print">
+      <img src="https://quickchart.io/qr?text=${encodeURIComponent(resultUrl)}&size=120" width="120" height="120" style="border-radius:8px" />
+      <p style="font-size:10px;color:#aaa;margin-top:4px">결과 확인 QR</p>
+      <p style="font-size:10px;color:#2563eb;word-break:break-all;max-width:180px">${resultUrl}</p>
+    </div>
   </div>
   <h2>검사 결과</h2>
   <div class="result-box"><div class="score">${extra.display||res.score}</div><div><span class="sev">${res.interp||''}</span></div></div>

@@ -42,7 +42,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sc-no{font-size:10px;color:#bbb;margin-bottom:2px}
 .sc-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-bottom:3px}
 .tag-dep{background:#dbeafe;color:#1d4ed8}.tag-anx{background:#d1fae5;color:#065f46}
-.tag-ocd{background:#ede9fe;color:#5b21b6}.tag-ptsd{background:#fef3c7;color:#92400e}.tag-other{background:#f3f4f6;color:#374151}
+.tag-ocd{background:#ede9fe;color:#5b21b6}.tag-ptsd{background:#fef3c7;color:#92400e}.tag-other{background:#f3f4f6;color:#374151}.tag-clin{background:#fdf4ff;color:#7e22ce}
 .sc-name{font-size:12px;font-weight:700}.sc-title{font-size:10px;color:#aaa}
 
 /* 선택 바 */
@@ -648,8 +648,24 @@ const CATEGORIES=[
 const SB_URL='https://rurbfcocihvapbtdzbyt.supabase.co';
 const SB_KEY='sb_publishable_YuyR-f-1MNYl94StDUP8Mw_L_35j3QN';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-const TAG_CLS={dep:'tag-dep',anx:'tag-anx',ocd:'tag-ocd',ptsd:'tag-ptsd',other:'tag-other'};
-const SCALE_ORDER=['asrs','cape15','phq9','cesd','qids','bdi','ids','cdi','kgds','mdq','hads','acq','appq','pdss','rfl','fne','ocir','moci','docs','mast','pcl5','ies'];
+const TAG_CLS={dep:'tag-dep',anx:'tag-anx',ocd:'tag-ocd',ptsd:'tag-ptsd',other:'tag-other',clin:'tag-clin'};
+
+// 임상가 척도 (clinical)
+const CLIN_ADMIN = {
+  hamd:{no:23,title:'임상가',name:'HAMD',cat:'clin',tag:'임상가',comment:'17항목, 최고점 52, (8 mild, 17 moderate, 24 severe)',qs:Array(17).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  hama:{no:24,title:'임상가',name:'HAMA',cat:'clin',tag:'임상가',comment:'14항목, 최고점 56',qs:Array(14).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  bprs:{no:25,title:'임상가',name:'BPRS',cat:'clin',tag:'임상가',comment:'18항목, 최고점 108',qs:Array(18).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  bdrs:{no:26,title:'임상가',name:'BDRS',cat:'clin',tag:'임상가',comment:'19항목',qs:Array(19).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  ymrs:{no:27,title:'임상가',name:'YMRS',cat:'clin',tag:'임상가',comment:'11항목, 최고점 60',qs:Array(11).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  whodas:{no:28,title:'임상가',name:'WHODAS',cat:'clin',tag:'임상가',comment:'15항목, 최고점 48',qs:Array(15).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  honos:{no:29,title:'임상가',name:'HoNOS',cat:'clin',tag:'임상가',comment:'13항목',qs:Array(13).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  mmse:{no:30,title:'임상가',name:'MMSE',cat:'clin',tag:'임상가',comment:'MMSE(30항목)+GDS',qs:Array(30).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+  psqi:{no:31,title:'임상가',name:'PSQI',cat:'clin',tag:'임상가',comment:'수면의 질 척도',qs:Array(9).fill(''),score(a){return{s1:0,display:'',interp:'',copy:()=>''}}},
+};
+// SCALES에 병합
+Object.assign(SCALES, CLIN_ADMIN);
+
+const SCALE_ORDER=['asrs','cape15','phq9','cesd','qids','bdi','ids','cdi','kgds','mdq','hads','acq','appq','pdss','rfl','fne','ocir','moci','docs','mast','pcl5','ies','hamd','hama','bprs','bdrs','ymrs','whodas','honos','mmse','psqi'];
 
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('act',['issue','results','patient'][i]===tab);});

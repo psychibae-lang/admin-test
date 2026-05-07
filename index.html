@@ -19,7 +19,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .screen{display:none}.screen.active{display:block}
 .btn{padding:7px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;transition:all 0.12s}
 .btn:hover{background:#f5f5f3}.btn.pri{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn.blue{background:#2563eb;color:#fff;border-color:#2563eb}.btn.sm{padding:4px 10px;font-size:11px}
+.btn.blue{background:#2563eb;color:#fff;border-color:#2563eb}.btn.sm{padding:4px 10px;font-size:13px;font-weight:700}
 
 /* 카테고리 카드 */
 .cat-lbl{font-size:12px;font-weight:600;color:#888;margin-bottom:8px}
@@ -40,7 +40,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sc-card{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px;cursor:pointer;transition:all 0.12s}
 .sc-card:hover{border-color:#bbb}.sc-card.sel{border:1.5px solid #2563eb;background:#eff6ff}
 .sc-no{font-size:10px;color:#bbb;margin-bottom:2px}
-.sc-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-bottom:3px}
+.sc-tag{display:inline-block;font-size:16px;padding:1px 5px;border-radius:3px;font-weight:700;margin-bottom:3px}
 .tag-dep{background:#dbeafe;color:#1d4ed8}.tag-anx{background:#d1fae5;color:#065f46}
 .tag-ocd{background:#ede9fe;color:#5b21b6}.tag-ptsd{background:#fef3c7;color:#92400e}.tag-other{background:#f3f4f6;color:#374151}.tag-clin{background:#fdf4ff;color:#7e22ce}
 .sc-name{font-size:12px;font-weight:700}.sc-title{font-size:10px;color:#aaa}
@@ -73,9 +73,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .chk{width:15px;height:15px;cursor:pointer;accent-color:#dc2626}
 
 table{width:100%;border-collapse:collapse;font-size:23px;min-width:1050px}
-th{text-align:left;padding:13px 14px;font-weight:500;font-size:21px;color:#888;border-bottom:1px solid #ebebeb;white-space:nowrap;background:#fafaf9;cursor:pointer;user-select:none}
+th{text-align:left;padding:13px 14px;font-weight:700;font-size:21px;color:#888;border-bottom:1px solid #ebebeb;white-space:nowrap;background:#fafaf9;cursor:pointer;user-select:none}
 th:hover{color:#1a1a1a}
-td{padding:11px 13px;border-bottom:1px solid #f5f5f3;vertical-align:middle;font-size:22px}
+td{padding:11px 13px;border-bottom:1px solid #f5f5f3;vertical-align:middle;font-size:22px;font-weight:600}
 tr:hover td{background:#fafaf9}
 .sev{display:inline-block;font-size:20px;padding:3px 10px;border-radius:10px;font-weight:500;white-space:nowrap}
 .sev-n{background:#d1fae5;color:#065f46}.sev-m{background:#fef3c7;color:#92400e}
@@ -127,19 +127,7 @@ th[draggable]:active{cursor:grabbing}
 </head>
 <body>
 
-<!-- 로그인 화면 -->
-<div id="login-wrap" class="login-wrap">
-  <div class="login-card">
-    <div class="login-logo">🧠</div>
-    <h1>검사 관리 시스템</h1>
-    <p>관리자 비밀번호를 입력하세요</p>
-    <input class="login-inp" type="password" id="pw-inp" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
-    <div class="login-err" id="login-err"></div>
-    <button class="login-btn" onclick="doLogin()">로그인</button>
-  </div>
-</div>
-
-<div id="main-app" style="display:none">
+<div id="main-app">
   <div class="top-bar">
     <h1>🧠 검사 관리</h1>
     <div class="tabs">
@@ -218,8 +206,8 @@ th[draggable]:active{cursor:grabbing}
     <div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
   </div>
 
-  <div class="screen content" id="tab-patient">
-    <div class="search-row">
+  <div class="screen content" id="tab-patient" style="font-weight:600;text-align:center">
+    <div class="search-row" style="justify-content:center">
       <input class="search-inp" id="pt-search" placeholder="환자 이름 또는 번호 입력" onkeydown="if(event.key==='Enter')searchPatient()" />
       <button class="btn pri" onclick="searchPatient()">검색</button>
     </div>
@@ -905,12 +893,12 @@ function renderRow(sess,res){
   const rowKey=sess.id+(res?.scale_id||'');
   return`<tr>
     <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' onchange='updateDelBar()'></td>
-    <td style="font-size:11px;white-space:nowrap;color:#888">
+    <td style="font-size:17px;white-space:nowrap;color:#888">
       ${ts}<br>
-      <button class="btn sm" style="margin-top:3px;font-size:10px;color:#2563eb;border-color:#bfdbfe" 
+      <button class="btn sm" style="margin-top:3px;font-size:16px;color:#2563eb;border-color:#bfdbfe" 
         onclick="copySessionAll('${sess.id}')">전체복사</button>
     </td>
-    <td style="font-weight:500;white-space:nowrap">
+    <td style="font-weight:700;white-space:nowrap">
       <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
         style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
         onmouseover="this.style.background='#f0f9ff'" 
@@ -918,11 +906,11 @@ function renderRow(sess,res){
         title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
     </td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
-    <td style="font-weight:600;font-size:13px;white-space:nowrap">${res?extra.display||res.score:''}</td>
+    <td style="font-weight:700;font-size:19px;white-space:nowrap">${res?extra.display||res.score:''}</td>
     <td style="white-space:nowrap">${res?`<span class="sev ${getSevCls(res.interp||'')}">${res.interp||''}</span>`:''}</td>
-    <td style="max-width:160px">${copy?`<div style="font-size:10px;color:#666;max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:3px">${copy}</div><button class="btn sm" onclick="copyText('${copyEsc}')">복사</button>`:''}</td>
+    <td style="max-width:160px">${copy?`<div style="font-size:16px;color:#666;max-width:150px;overflow:hidden;white-space:normal;word-break:break-all;margin-bottom:3px">${copy}</div><button class="btn sm" onclick="copyText('${copyEsc}')">복사</button>`:''}</td>
     <td style="max-width:160px">
-      <div style="font-size:11px;color:#555;line-height:1.5;margin-bottom:3px">${dbComment||scComment.slice(0,50)+(scComment.length>50?'…':'')}</div>
+      <div style="font-size:15px;color:#555;line-height:1.5;margin-bottom:3px">${dbComment||scComment.slice(0,50)+(scComment.length>50?'…':'')}</div>
       <button class="btn sm" onclick="editComment('${resId}','${dbCommentEsc}')">편집</button>
     </td>
     <td>${res?`<button class="btn sm blue" onclick="saveSessionPDF('${sess.id}')">PDF</button>`:''}</td>
@@ -930,11 +918,11 @@ function renderRow(sess,res){
       ${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프1</button>`:''}
       ${(res&&(res.scale_id==='ocir'||res.scale_id==='moci'))?`<button class="btn sm" style="margin-top:3px" onclick="openGraph2('${sess.id}','${res.scale_id||''}')">그래프2</button>`:''}
     </td>
-    <td style="font-size:11px;white-space:nowrap;color:#888">
+    <td style="font-size:17px;white-space:nowrap;color:#888">
       ${ts}<br>
-      <button class="btn sm" style="margin-top:3px;font-size:10px;color:#2563eb;border-color:#bfdbfe" onclick="copySessionAll('${sess.id}')">전체복사</button>
+      <button class="btn sm" style="margin-top:3px;font-size:16px;color:#2563eb;border-color:#bfdbfe" onclick="copySessionAll('${sess.id}')">전체복사</button>
     </td>
-    <td style="font-weight:500;white-space:nowrap">
+    <td style="font-weight:700;white-space:nowrap">
       <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)" style="cursor:pointer" title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
     </td>
   </tr>`;
@@ -1265,23 +1253,23 @@ async function searchPatient(){
     const sr=(results||[]).filter(r=>r.session_id===sess.id);
     const dt=new Date(sess.created_at);
     const ds=`${String(dt.getFullYear()).slice(2)}${p2(dt.getMonth()+1)}${p2(dt.getDate())} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;
-    return`<div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;border:1px solid #e8e8e8">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div><div style="font-size:24px;font-weight:600">${sess.patient_name||''} <span style="font-size:19px;color:#aaa;font-weight:400">${''}</span></div>
-        <div style="font-size:19px;color:#aaa">${ds} · ${sess.scales?.length||0}개 검사</div></div>
+    return`<div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;border:1px solid #e8e8e8;text-align:center">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:10px">
+        <div><div style="font-size:26px;font-weight:700">${sess.patient_name||''} <span style="font-size:21px;color:#aaa;font-weight:700">${''}</span></div>
+        <div style="font-size:21px;color:#aaa;font-weight:600">${ds} · ${sess.scales?.length||0}개 검사</div></div>
         <span class="status-badge ${sess.status==='완료'?'s-done':'s-wait'}">${sess.status}</span>
       </div>
-      ${sr.length===0?'<div style="font-size:20px;color:#aaa">결과 없음</div>':sr.map(r=>{
+      ${sr.length===0?'<div style="font-size:22px;color:#aaa;font-weight:600">결과 없음</div>':sr.map(r=>{
         const sc=getScale(r.scale_id);const extra=tryParse(r.extra_scores||'{}');
         const gUrl=getGraphUrl(r.scale_id,extra);
         const copyEsc=(r.copy_text||'').replace(/'/g,"&#39;").replace(/\n/g,' ');
-        return`<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span class="sc-tag ${TAG_CLS[sc?.cat]||'tag-other'}" style="font-size:18px;padding:3px 10px">${sc?.name||r.scale_id}</span>
-          <span style="font-weight:600;font-size:22px">${extra.display||r.score}</span>
-          <span class="sev ${getSevCls(r.interp||'')}" style="font-size:18px;padding:3px 12px">${r.interp||''}</span>
-          ${r.copy_text?`<button class="btn" style="font-size:16px;padding:5px 14px" onclick="copyText('${copyEsc}')">복사</button>`:''}
-          ${gUrl?`<button class="btn" style="font-size:16px;padding:5px 14px" onclick="openGraph('${gUrl}')">그래프</button>`:''}
-          <button class="btn blue" style="font-size:16px;padding:5px 14px" onclick="savePDF('${sess.id}','${r.scale_id}')">PDF</button>
+        return`<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+          <span class="sc-tag ${TAG_CLS[sc?.cat]||'tag-other'}" style="font-size:20px;padding:3px 10px;font-weight:700">${sc?.name||r.scale_id}</span>
+          <span style="font-weight:700;font-size:24px">${extra.display||r.score}</span>
+          <span class="sev ${getSevCls(r.interp||'')}" style="font-size:20px;padding:3px 12px;font-weight:700">${r.interp||''}</span>
+          ${r.copy_text?`<button class="btn" style="font-size:18px;padding:5px 14px;font-weight:700" onclick="copyText('${copyEsc}')">복사</button>`:''}
+          ${gUrl?`<button class="btn" style="font-size:18px;padding:5px 14px;font-weight:700" onclick="openGraph('${gUrl}')">그래프</button>`:''}
+          <button class="btn blue" style="font-size:18px;padding:5px 14px;font-weight:700" onclick="savePDF('${sess.id}','${r.scale_id}')">PDF</button>
         </div>`;
       }).join('')}
     </div>`;
@@ -1303,21 +1291,12 @@ function p2(n){return String(n).padStart(2,'0');}
 
 // 초기화 - DOM 로드 후 실행
 
-const ADMIN_PW='hanriver1000';
-
 function doLogin(){
-  const pw=document.getElementById('pw-inp').value;
-  if(pw===ADMIN_PW){
-    document.getElementById('login-wrap').style.display='none';
-    document.getElementById('main-app').style.display='block';
-    renderCatCards();
-    renderScaleGrid('all');
-    loadResults();
-  } else {
-    document.getElementById('login-err').textContent='비밀번호가 올바르지 않습니다.';
-    document.getElementById('pw-inp').value='';
-    document.getElementById('pw-inp').focus();
-  }
+  document.getElementById('login-wrap') && (document.getElementById('login-wrap').style.display='none');
+  document.getElementById('main-app').style.display='block';
+  renderCatCards();
+  renderScaleGrid('all');
+  loadResults();
 }
 
 
@@ -1618,8 +1597,8 @@ document.addEventListener('DOMContentLoaded',async function(){
     await showResultPage(sid);
     return;
   }
-  // 로그인 화면 표시
-  document.getElementById('pw-inp').focus();
+  // 바로 앱 시작 (비번 없음)
+  doLogin();
 });
 
 async function showResultPage(sid){

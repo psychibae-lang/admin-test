@@ -145,6 +145,32 @@ th[draggable]:active{cursor:grabbing}
 .panic-copy-btn:hover{background:#333}
 .panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
 
+
+/* 컬럼 리사이즈 */
+table{table-layout:fixed;width:100%}
+th{position:relative;overflow:hidden;white-space:nowrap}
+th .resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;background:transparent}
+th .resizer:hover,th .resizer.dragging{background:rgba(37,99,235,0.4)}
+th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;width:2px;background:#ddd;border-radius:1px}
+
+/* 테이블 정렬 버튼 */
+.align-bar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.align-btn{padding:5px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:#666}
+.align-btn.act{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.tbl-container{overflow-x:auto}
+
+/* 기본 컬럼 너비 */
+.col-chk{width:36px}
+.col-scale{width:80px}
+.col-result{width:140px}
+.col-interp{width:160px}
+.col-copy{width:180px}
+.col-comment{width:180px}
+.col-save{width:70px}
+.col-graph{width:100px}
+.col-time{width:110px}
+.col-name{width:90px}
+
 </style>
 </head>
 <body>
@@ -217,6 +243,12 @@ th[draggable]:active{cursor:grabbing}
   </div>
 
   <div class="screen content" id="tab-results">
+    <div class="align-bar">
+      <span style="font-size:12px;color:#888;margin-right:4px">테이블 위치:</span>
+      <button class="align-btn" onclick="setTblAlign('left',this)">왼쪽</button>
+      <button class="align-btn" onclick="setTblAlign('center',this)">가운데</button>
+      <button class="align-btn act" onclick="setTblAlign('right',this)">오른쪽</button>
+    </div>
     <div class="filter-bar">
       <input id="f-name" placeholder="이름/번호 검색" oninput="debounceSearch()" />
       <input id="f-scale" placeholder="검사명 검색" oninput="debounceSearch()" />
@@ -238,7 +270,7 @@ th[draggable]:active{cursor:grabbing}
       <button class="btn sm" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="deleteSelected()">🗑️ 선택 삭제</button>
       <button class="btn sm" onclick="clearSelection()">취소</button>
     </div>
-    <div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="tbl-container" id="tbl-container"><div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
   </div>
 
   <div class="screen content" id="tab-patient" style="font-weight:600;text-align:center">
@@ -966,14 +998,20 @@ function renderTable(){
   const wrap=document.getElementById('tbl-wrap');
   if(rows.length===0){wrap.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
   const ch=(col,lbl)=>`<th class="${sortCol===col?'sort-'+sortDir:''}" onclick="doSort('${col}')" draggable="true">${lbl}</th>`;
+  const rz='<div class="resizer"></div>';
   wrap.innerHTML=`<table><thead><tr>
-    <th style="width:36px"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
-    ${ch('time','TIME')}${ch('name','이름')}
-    ${ch('scale','검사명')}
-    <th draggable="true">검사결과</th><th draggable="true">검사해석</th><th draggable="true">검사복사</th><th draggable="true">COMMENT</th><th draggable="true">저장</th><th draggable="true">그래프</th>
-    ${ch('time','TIME')}${ch('name','이름')}
+    <th class="col-chk"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
+    <th class="col-scale ${sortCol==='scale'?'sort-'+sortDir:''}" onclick="doSort('scale')" draggable="true">검사명${rz}</th>
+    <th class="col-result" draggable="true">검사결과${rz}</th>
+    <th class="col-interp" draggable="true">검사해석${rz}</th>
+    <th class="col-copy" draggable="true">검사복사${rz}</th>
+    <th class="col-comment" draggable="true">COMMENT${rz}</th>
+    <th class="col-save" draggable="true">저장${rz}</th>
+    <th class="col-graph" draggable="true">그래프${rz}</th>
+    <th class="col-time ${sortCol==='time'?'sort-'+sortDir:''}" onclick="doSort('time')" draggable="true">TIME${rz}</th>
+    <th class="col-name ${sortCol==='name'?'sort-'+sortDir:''}" onclick="doSort('name')" draggable="true">이름${rz}</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
-  setTimeout(initColDrag,100);
+  setTimeout(()=>{initColDrag();initResizers();applyTblAlign();},100);
 }
 
 function renderRow(sess,res){
@@ -1142,6 +1180,32 @@ async function saveSessionPDF(sessId){
 .panic-copy-btn:hover{background:#333}
 .panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
 
+
+/* 컬럼 리사이즈 */
+table{table-layout:fixed;width:100%}
+th{position:relative;overflow:hidden;white-space:nowrap}
+th .resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;background:transparent}
+th .resizer:hover,th .resizer.dragging{background:rgba(37,99,235,0.4)}
+th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;width:2px;background:#ddd;border-radius:1px}
+
+/* 테이블 정렬 버튼 */
+.align-bar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.align-btn{padding:5px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:#666}
+.align-btn.act{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.tbl-container{overflow-x:auto}
+
+/* 기본 컬럼 너비 */
+.col-chk{width:36px}
+.col-scale{width:80px}
+.col-result{width:140px}
+.col-interp{width:160px}
+.col-copy{width:180px}
+.col-comment{width:180px}
+.col-save{width:70px}
+.col-graph{width:100px}
+.col-time{width:110px}
+.col-name{width:90px}
+
 </style></head><body>
   <div class="top-bar">
     <div>
@@ -1247,6 +1311,32 @@ async function savePDF(sessId,scaleId){
 .panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
 .panic-copy-btn:hover{background:#333}
 .panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+
+
+/* 컬럼 리사이즈 */
+table{table-layout:fixed;width:100%}
+th{position:relative;overflow:hidden;white-space:nowrap}
+th .resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;background:transparent}
+th .resizer:hover,th .resizer.dragging{background:rgba(37,99,235,0.4)}
+th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;width:2px;background:#ddd;border-radius:1px}
+
+/* 테이블 정렬 버튼 */
+.align-bar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.align-btn{padding:5px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:#666}
+.align-btn.act{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.tbl-container{overflow-x:auto}
+
+/* 기본 컬럼 너비 */
+.col-chk{width:36px}
+.col-scale{width:80px}
+.col-result{width:140px}
+.col-interp{width:160px}
+.col-copy{width:180px}
+.col-comment{width:180px}
+.col-save{width:70px}
+.col-graph{width:100px}
+.col-time{width:110px}
+.col-name{width:90px}
 
 </style>
   </head><body>
@@ -1848,6 +1938,32 @@ async function showResultPage(sid){
 .panic-copy-btn:hover{background:#333}
 .panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
 
+
+/* 컬럼 리사이즈 */
+table{table-layout:fixed;width:100%}
+th{position:relative;overflow:hidden;white-space:nowrap}
+th .resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;background:transparent}
+th .resizer:hover,th .resizer.dragging{background:rgba(37,99,235,0.4)}
+th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;width:2px;background:#ddd;border-radius:1px}
+
+/* 테이블 정렬 버튼 */
+.align-bar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.align-btn{padding:5px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:#666}
+.align-btn.act{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.tbl-container{overflow-x:auto}
+
+/* 기본 컬럼 너비 */
+.col-chk{width:36px}
+.col-scale{width:80px}
+.col-result{width:140px}
+.col-interp{width:160px}
+.col-copy{width:180px}
+.col-comment{width:180px}
+.col-save{width:70px}
+.col-graph{width:100px}
+.col-time{width:110px}
+.col-name{width:90px}
+
 </style></head><body>
   <h1>정신건강 검사 결과지</h1>
   <div class="meta">
@@ -1924,6 +2040,71 @@ function copyPanicResult(){
 
   navigator.clipboard.writeText(text).then(()=>toast('✅ 공황 체크 결과 복사!'));
 }
+
+// 컬럼 리사이즈
+function initResizers(){
+  document.querySelectorAll('#tbl-wrap th').forEach(th=>{
+    const rz=th.querySelector('.resizer');
+    if(!rz)return;
+    let startX,startW;
+    rz.addEventListener('mousedown',e=>{
+      startX=e.pageX; startW=th.offsetWidth;
+      rz.classList.add('dragging');
+      const onMove=e2=>{
+        const w=Math.max(50,startW+(e2.pageX-startX));
+        th.style.width=w+'px';
+        // colgroup이 없으므로 td도 동일 인덱스로
+        const idx=Array.from(th.parentNode.children).indexOf(th);
+        document.querySelectorAll('#tbl-wrap tr').forEach(row=>{
+          const td=row.children[idx];
+          if(td)td.style.width=w+'px';
+        });
+      };
+      const onUp=()=>{
+        rz.classList.remove('dragging');
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+      e.preventDefault();
+    });
+  });
+}
+
+// 테이블 정렬
+let tblAlign='right';
+function setTblAlign(align,el){
+  tblAlign=align;
+  document.querySelectorAll('.align-btn').forEach(b=>b.classList.remove('act'));
+  el.classList.add('act');
+  applyTblAlign();
+  localStorage.setItem('tblAlign',align);
+}
+function applyTblAlign(){
+  const c=document.getElementById('tbl-container');
+  if(!c)return;
+  if(tblAlign==='right'){
+    c.style.cssText='overflow-x:auto;display:flex;justify-content:flex-end';
+  } else if(tblAlign==='center'){
+    c.style.cssText='overflow-x:auto;display:flex;justify-content:center';
+  } else {
+    c.style.cssText='overflow-x:auto;display:flex;justify-content:flex-start';
+  }
+}
+// 저장된 정렬 복원
+(function(){
+  const saved=localStorage.getItem('tblAlign')||'right';
+  tblAlign=saved;
+  // 버튼 active 표시는 DOM 로드 후
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.querySelectorAll('.align-btn').forEach(b=>{
+      if(b.textContent.includes(saved==='right'?'오른쪽':saved==='center'?'가운데':'왼쪽'))
+        b.classList.add('act');
+      else b.classList.remove('act');
+    });
+  });
+})();
 </script>
 </body>
 </html>

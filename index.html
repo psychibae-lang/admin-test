@@ -123,6 +123,28 @@ th[draggable]:active{cursor:grabbing}
 .login-err{font-size:12px;color:#ef4444;margin-bottom:8px;min-height:18px}
 .login-btn{width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.15s}
 .login-btn:hover{background:#333}
+
+.panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
+.panic-section{margin-bottom:1.5rem}
+.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-item:hover{border-color:#bbb;background:#fafafa}
+.panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
+.panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result.show{display:block}
+.panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
+.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-copy-btn:hover{background:#333}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+
 </style>
 </head>
 <body>
@@ -146,6 +168,7 @@ th[draggable]:active{cursor:grabbing}
       <div class="tab act" onclick="switchTab('issue')">검사 발급</div>
       <div class="tab" onclick="switchTab('results')">결과 현황</div>
       <div class="tab" onclick="switchTab('patient')">환자별 조회</div>
+      <div class="tab" onclick="switchTab('panic')">공황 체크</div>
     </div>
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
       <button onclick="downloadBackup()" style="padding:6px 14px;border:1px solid #22c55e;border-radius:8px;background:#f0fdf4;cursor:pointer;font-size:12px;color:#16a34a;font-weight:500">💾 백업</button>
@@ -226,6 +249,70 @@ th[draggable]:active{cursor:grabbing}
     <div id="pt-result"></div>
   </div>
 </div>
+  <div class="screen content" id="tab-panic">
+    <div class="panic-wrap">
+      <div class="panic-counter">
+        <div class="panic-count-box">
+          <div class="num" id="panic-cnt-a">0</div>
+          <div class="lbl">신체증상 (1-11번)</div>
+        </div>
+        <div class="panic-count-box" style="background:#fff5f5;border-color:#fca5a5">
+          <div class="num" style="color:#dc2626" id="panic-cnt-b">0</div>
+          <div class="lbl">인지증상 (12-13번)</div>
+        </div>
+        <div class="panic-count-box" style="background:#f0fdf4;border-color:#bbf7d0">
+          <div class="num" style="color:#16a34a" id="panic-cnt-c">0</div>
+          <div class="lbl">회피행동 (14-25번)</div>
+        </div>
+      </div>
+      <button class="panic-reset" onclick="resetPanic()">↺ 전체 초기화</button>
+
+      <div class="panic-section">
+        <div class="panic-section-title">TEST 1. 여러분들이 자주 경험하는 느낌이 있다면 번호에 체크해 주세요!</div>
+        <div class="panic-item" data-group="a" data-idx="1" onclick="togglePanic(this)">1. 맥박이 빠르게 뛰고 심장박동이 빠르다</div>
+        <div class="panic-item" data-group="a" data-idx="2" onclick="togglePanic(this)">2. 손발에 떨림이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="3" onclick="togglePanic(this)">3. 질식감이 든다.</div>
+        <div class="panic-item" data-group="a" data-idx="4" onclick="togglePanic(this)">4. 속이 거북하거나 구토감이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="5" onclick="togglePanic(this)">5. 오한이나 화끈한 느낌이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="6" onclick="togglePanic(this)">6. 손발이 저리거나 마비되는 느낌이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="7" onclick="togglePanic(this)">7. 땀이 많다.</div>
+        <div class="panic-item" data-group="a" data-idx="8" onclick="togglePanic(this)">8. 호흡이 가쁘다.</div>
+        <div class="panic-item" data-group="a" data-idx="9" onclick="togglePanic(this)">9. 가슴에 통증이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="10" onclick="togglePanic(this)">10. 어지러움 증이 있다.</div>
+        <div class="panic-item" data-group="a" data-idx="11" onclick="togglePanic(this)">11. 자신이 변한 것 같다.</div>
+      </div>
+
+      <div class="panic-section">
+        <div class="panic-section-desc">위에 체크한 증상들로 인해 아래와 같은 불편감이 있었다면 체크해주세요</div>
+        <div class="panic-item danger" data-group="b" data-idx="12" onclick="togglePanic(this)">12. 자제력을 잃을 것 같거나 미칠 것 같은 두려움이 있다.</div>
+        <div class="panic-item danger" data-group="b" data-idx="13" onclick="togglePanic(this)">13. 죽을 것 같은 공포가 있다.</div>
+      </div>
+
+      <div class="panic-note">
+        만약, 문항 1-11에서 3개 이상, 문항 12,13 중에서 1개 이상이 체크되었다면 공황을 경험한 것입니다.
+      </div>
+
+      <div class="panic-result" id="panic-result"></div>
+
+      <div class="panic-section" style="margin-top:2rem">
+        <div class="panic-section-title">Test 2. 여러분들이 자주 회피하는 것이 있다면 번호에 체크해 주세요!<br><span style="font-size:13px;font-weight:400;color:#666">(광장공포증은 실제로는 위험하지 않은데, 공포나 공황의 두려움 때문에 그리 벗어나기가 어렵거나 도움을 청할 수 없는 상황이나 장소를 피하는 것을 말합니다.)</span></div>
+        <div class="panic-item" data-group="c" data-idx="14" onclick="togglePanic(this)">14. 운전</div>
+        <div class="panic-item" data-group="c" data-idx="15" onclick="togglePanic(this)">15. 버스, 지하철, 비행기, 택시 등 대중교통 수단</div>
+        <div class="panic-item" data-group="c" data-idx="16" onclick="togglePanic(this)">16. 줄을 서서 차례를 기다리기</div>
+        <div class="panic-item" data-group="c" data-idx="17" onclick="togglePanic(this)">17. 사람이 많은 곳</div>
+        <div class="panic-item" data-group="c" data-idx="18" onclick="togglePanic(this)">18. 식당, 극장 등 시끄럽거나 복잡한 장소</div>
+        <div class="panic-item" data-group="c" data-idx="19" onclick="togglePanic(this)">19. 장거리여행, 출장</div>
+        <div class="panic-item" data-group="c" data-idx="20" onclick="togglePanic(this)">20. 사방이 폐쇄된 장소</div>
+        <div class="panic-item" data-group="c" data-idx="21" onclick="togglePanic(this)">21. 사우나 혹은 냉탕에 들어가기</div>
+        <div class="panic-item" data-group="c" data-idx="22" onclick="togglePanic(this)">22. 혼자 집에 있기</div>
+        <div class="panic-item" data-group="c" data-idx="23" onclick="togglePanic(this)">23. 엘리베이터, 에스컬레이터</div>
+        <div class="panic-item" data-group="c" data-idx="24" onclick="togglePanic(this)">24. 다리, 터널</div>
+        <div class="panic-item" data-group="c" data-idx="25" onclick="togglePanic(this)">25. 혼자 멀리 외출하기</div>
+      </div>
+
+      <button class="panic-copy-btn" onclick="copyPanicResult()">📋 결과 복사 (차트용)</button>
+    </div>
+  </div>
 
 <div class="modal-bg" id="modal-comment" style="display:none" onclick="closeModal('modal-comment')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -702,8 +789,8 @@ Object.assign(SCALES, CLIN_ADMIN);
 const SCALE_ORDER=['asrs','cape15','phq9','cesd','qids','bdi','ids','cdi','kgds','mdq','hads','acq','appq','pdss','rfl','fne','ocir','moci','docs','mast','pcl5','ies','hamd','hama','bprs','bdrs','ymrs','whodas','honos','mmse','psqi'];
 
 function switchTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('act',['issue','results','patient'][i]===tab);});
-  ['issue','results','patient'].forEach(id=>{
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('act',['issue','results','patient','panic'][i]===tab);});
+  ['issue','results','patient','panic'].forEach(id=>{
     document.getElementById('tab-'+id).classList.toggle('active',id===tab);
   });
   if(tab==='results')loadResults();
@@ -1033,7 +1120,29 @@ async function saveSessionPDF(sessId){
   .qr-box{text-align:center}
   .qr-box p{font-size:10px;color:#aaa;margin-top:4px}
   @media print{.no-print{display:none}body{padding:1rem}.section{page-break-inside:avoid}}
-  </style></head><body>
+  
+.panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
+.panic-section{margin-bottom:1.5rem}
+.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-item:hover{border-color:#bbb;background:#fafafa}
+.panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
+.panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result.show{display:block}
+.panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
+.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-copy-btn:hover{background:#333}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+
+</style></head><body>
   <div class="top-bar">
     <div>
       <button class="print-btn no-print" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
@@ -1117,7 +1226,29 @@ async function savePDF(sessId,scaleId){
   .a{font-size:13px;color:#2563eb;padding-left:14px;font-weight:500}
   .comment{background:#fffbeb;border-radius:8px;padding:12px 16px;font-size:12px;color:#555;line-height:1.7}
   .copy{background:#f0f4ff;border-radius:8px;padding:10px 14px;font-size:11px;font-family:monospace;word-break:break-all}
-  @media print{.no-print{display:none}body{padding:1rem}}</style>
+  @media print{.no-print{display:none}body{padding:1rem}}
+.panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
+.panic-section{margin-bottom:1.5rem}
+.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-item:hover{border-color:#bbb;background:#fafafa}
+.panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
+.panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result.show{display:block}
+.panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
+.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-copy-btn:hover{background:#333}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+
+</style>
   </head><body>
   <h1>정신건강 검사 결과지</h1>
   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
@@ -1695,7 +1826,29 @@ async function showResultPage(sid){
   .copy{background:#f0f4ff;border-radius:8px;padding:8px 12px;font-size:11px;font-family:monospace;word-break:break-all}
   .result-section{margin-bottom:2rem}
   @media print{.no-print{display:none}body{padding:1rem}.result-section{page-break-after:always}}
-  </style></head><body>
+  
+.panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
+.panic-section{margin-bottom:1.5rem}
+.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-item:hover{border-color:#bbb;background:#fafafa}
+.panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
+.panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result.show{display:block}
+.panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
+.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-copy-btn:hover{background:#333}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+
+</style></head><body>
   <h1>정신건강 검사 결과지</h1>
   <div class="meta">
     <b>시행날짜</b>: ${ds}<br>
@@ -1710,6 +1863,67 @@ async function showResultPage(sid){
   document.open();document.write(fullHTML);document.close();
 }
 
+
+// ═══ 공황 체크리스트 ═══
+function togglePanic(el){
+  el.classList.toggle('checked');
+  updatePanicResult();
+}
+
+function updatePanicResult(){
+  const cntA=document.querySelectorAll('.panic-item[data-group="a"].checked').length;
+  const cntB=document.querySelectorAll('.panic-item[data-group="b"].checked').length;
+  const cntC=document.querySelectorAll('.panic-item[data-group="c"].checked').length;
+  document.getElementById('panic-cnt-a').textContent=cntA;
+  document.getElementById('panic-cnt-b').textContent=cntB;
+  document.getElementById('panic-cnt-c').textContent=cntC;
+  const result=document.getElementById('panic-result');
+  const isPanic=cntA>=3&&cntB>=1;
+  if(cntA>0||cntB>0){
+    result.className='panic-result show '+(isPanic?'positive':'negative');
+    result.innerHTML=isPanic
+      ?`⚠️ 공황 경험 가능성<br><span style="font-size:13px;font-weight:400">신체증상 ${cntA}개 · 인지증상 ${cntB}개 체크<br>전문가 상담을 권장합니다.</span>`
+      :`✅ 현재 공황 기준 미충족<br><span style="font-size:13px;font-weight:400">신체증상 ${cntA}개 · 인지증상 ${cntB}개 체크</span>`;
+  } else {
+    result.className='panic-result';
+  }
+}
+
+function resetPanic(){
+  document.querySelectorAll('.panic-item.checked').forEach(el=>el.classList.remove('checked'));
+  ['a','b','c'].forEach(g=>{const el=document.getElementById('panic-cnt-'+g);if(el)el.textContent='0';});
+  const result=document.getElementById('panic-result');
+  if(result)result.className='panic-result';
+}
+
+function copyPanicResult(){
+  const LABEL={
+    '1':'두근거림','2':'손발떨림','3':'질식감','4':'속거북감',
+    '5':'오한화끈','6':'저림마비','7':'땀','8':'호흡불편',
+    '9':'가슴통증','10':'어지러움','11':'이인감',
+    '12':'자제력두려움','13':'죽을것같은공포',
+    '14':'운전','15':'대중교통','16':'줄서기','17':'사람',
+    '18':'복잡장소','19':'장거리','20':'폐쇄장소',
+    '21':'사우나','22':'혼자집','23':'엘리베이터','24':'다리터널','25':'혼자외출'
+  };
+  const itemsA=[...document.querySelectorAll('.panic-item[data-group="a"].checked')];
+  const itemsB=[...document.querySelectorAll('.panic-item[data-group="b"].checked')];
+  const itemsC=[...document.querySelectorAll('.panic-item[data-group="c"].checked')];
+  const cntA=itemsA.length, cntB=itemsB.length, cntC=itemsC.length;
+  const isPanic=cntA>=3&&cntB>=1;
+
+  const labA=itemsA.map(e=>LABEL[e.dataset.idx]||e.dataset.idx).join(' ');
+  const labB=itemsB.map(e=>LABEL[e.dataset.idx]||e.dataset.idx).join(' ');
+  const labC=itemsC.map(e=>LABEL[e.dataset.idx]||e.dataset.idx).join(' ');
+
+  let text='';
+  if(labA) text+=`신체: ${labA}\n`;
+  if(labB) text+=`인지: ${labB}\n`;
+  if(labC) text+=`회피: ${labC}\n`;
+  text+=`판정: ${isPanic?'공황(+)':'공황(-)'}`;
+
+  navigator.clipboard.writeText(text).then(()=>toast('✅ 공황 체크 결과 복사!'));
+}
 </script>
 </body>
 </html>

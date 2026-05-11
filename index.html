@@ -126,24 +126,24 @@ th[draggable]:active{cursor:grabbing}
 
 .panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
 .panic-section{margin-bottom:1.5rem}
-.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
-.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
-.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-section-title{font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:24px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:30px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
 .panic-item:hover{border-color:#bbb;background:#fafafa}
 .panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
 .panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
-.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:28px;font-weight:600;text-align:center;line-height:1.7;display:none}
 .panic-result.show{display:block}
 .panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
 .panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
 .panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
 .panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
-.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
-.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
-.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
-.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-count-box .num{font-size:54px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:20px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:24px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:28px;font-weight:600;cursor:pointer;margin-top:12px}
 .panic-copy-btn:hover{background:#333}
-.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:24px;color:#92400e;line-height:1.7;margin:1rem 0}
 
 
 /* 컬럼 리사이즈 */
@@ -328,7 +328,7 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
       <div class="panic-result" id="panic-result"></div>
 
       <div class="panic-section" style="margin-top:2rem">
-        <div class="panic-section-title">Test 2. 여러분들이 자주 회피하는 것이 있다면 번호에 체크해 주세요!<br><span style="font-size:13px;font-weight:400;color:#666">(광장공포증은 실제로는 위험하지 않은데, 공포나 공황의 두려움 때문에 그리 벗어나기가 어렵거나 도움을 청할 수 없는 상황이나 장소를 피하는 것을 말합니다.)</span></div>
+        <div class="panic-section-title">Test 2. 여러분들이 자주 회피하는 것이 있다면 번호에 체크해 주세요!<br><span style="font-size:24px;font-weight:400;color:#666">(광장공포증은 실제로는 위험하지 않은데, 공포나 공황의 두려움 때문에 그리 벗어나기가 어렵거나 도움을 청할 수 없는 상황이나 장소를 피하는 것을 말합니다.)</span></div>
         <div class="panic-item" data-group="c" data-idx="14" onclick="togglePanic(this)">14. 운전</div>
         <div class="panic-item" data-group="c" data-idx="15" onclick="togglePanic(this)">15. 버스, 지하철, 비행기, 택시 등 대중교통 수단</div>
         <div class="panic-item" data-group="c" data-idx="16" onclick="togglePanic(this)">16. 줄을 서서 차례를 기다리기</div>
@@ -1162,24 +1162,24 @@ async function saveSessionPDF(sessId){
   
 .panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
 .panic-section{margin-bottom:1.5rem}
-.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
-.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
-.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-section-title{font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:24px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:30px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
 .panic-item:hover{border-color:#bbb;background:#fafafa}
 .panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
 .panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
-.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:28px;font-weight:600;text-align:center;line-height:1.7;display:none}
 .panic-result.show{display:block}
 .panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
 .panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
 .panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
 .panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
-.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
-.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
-.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
-.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-count-box .num{font-size:54px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:20px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:24px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:28px;font-weight:600;cursor:pointer;margin-top:12px}
 .panic-copy-btn:hover{background:#333}
-.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:24px;color:#92400e;line-height:1.7;margin:1rem 0}
 
 
 /* 컬럼 리사이즈 */
@@ -1294,24 +1294,24 @@ async function savePDF(sessId,scaleId){
   @media print{.no-print{display:none}body{padding:1rem}}
 .panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
 .panic-section{margin-bottom:1.5rem}
-.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
-.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
-.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-section-title{font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:24px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:30px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
 .panic-item:hover{border-color:#bbb;background:#fafafa}
 .panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
 .panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
-.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:28px;font-weight:600;text-align:center;line-height:1.7;display:none}
 .panic-result.show{display:block}
 .panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
 .panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
 .panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
 .panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
-.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
-.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
-.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
-.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-count-box .num{font-size:54px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:20px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:24px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:28px;font-weight:600;cursor:pointer;margin-top:12px}
 .panic-copy-btn:hover{background:#333}
-.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:24px;color:#92400e;line-height:1.7;margin:1rem 0}
 
 
 /* 컬럼 리사이즈 */
@@ -1920,24 +1920,24 @@ async function showResultPage(sid){
   
 .panic-wrap{padding:1rem 1.5rem;max-width:620px;margin:0 auto}
 .panic-section{margin-bottom:1.5rem}
-.panic-section-title{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
-.panic-section-desc{font-size:13px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
-.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
+.panic-section-title{font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:10px;padding:10px 14px;background:#f5f5f3;border-radius:8px;line-height:1.55}
+.panic-section-desc{font-size:24px;color:#555;margin-bottom:10px;line-height:1.65;padding:0 4px}
+.panic-item{padding:15px 16px;margin-bottom:7px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;font-size:30px;font-weight:500;color:#333;text-align:center;transition:all 0.15s;user-select:none;line-height:1.5}
 .panic-item:hover{border-color:#bbb;background:#fafafa}
 .panic-item.checked{background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:700;transform:scale(1.01)}
 .panic-item.danger.checked{background:#dc2626;border-color:#dc2626}
-.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;line-height:1.7;display:none}
+.panic-result{margin-top:1.25rem;padding:16px 18px;border-radius:12px;font-size:28px;font-weight:600;text-align:center;line-height:1.7;display:none}
 .panic-result.show{display:block}
 .panic-result.positive{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
 .panic-result.negative{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
 .panic-counter{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
 .panic-count-box{flex:1;min-width:110px;padding:12px 14px;border-radius:10px;text-align:center;background:#f0f9ff;border:1px solid #bae6fd}
-.panic-count-box .num{font-size:30px;font-weight:800;color:#1d4ed8}
-.panic-count-box .lbl{font-size:11px;color:#888;margin-top:2px}
-.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#666;margin-bottom:1rem}
-.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.panic-count-box .num{font-size:54px;font-weight:800;color:#1d4ed8}
+.panic-count-box .lbl{font-size:20px;color:#888;margin-top:2px}
+.panic-reset{padding:7px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:24px;color:#666;margin-bottom:1rem}
+.panic-copy-btn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:28px;font-weight:600;cursor:pointer;margin-top:12px}
 .panic-copy-btn:hover{background:#333}
-.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.7;margin:1rem 0}
+.panic-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:24px;color:#92400e;line-height:1.7;margin:1rem 0}
 
 
 /* 컬럼 리사이즈 */

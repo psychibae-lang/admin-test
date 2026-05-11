@@ -264,6 +264,7 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
         <option value="365">최근 1년</option>
       </select>
       <button class="btn sm" onclick="loadResults()">새로고침</button>
+      <button class="btn sm" onclick="saveColWidths()" style="background:#f0fdf4;border-color:#86efac;color:#16a34a" title="현재 컬럼 간격을 저장합니다">💾 간격 저장</button>
     </div>
     <div class="del-bar" id="del-bar">
       <span class="del-count" id="del-count">0개 선택됨</span>
@@ -1011,7 +1012,7 @@ function renderTable(){
     <th class="col-time ${sortCol==='time'?'sort-'+sortDir:''}" onclick="doSort('time')" draggable="true">TIME${rz}</th>
     <th class="col-name ${sortCol==='name'?'sort-'+sortDir:''}" onclick="doSort('name')" draggable="true">이름${rz}</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
-  setTimeout(()=>{initColDrag();initResizers();applyTblAlign();},100);
+  setTimeout(()=>{initColDrag();initResizers();applyTblAlign();restoreColWidths();},100);
 }
 
 function renderRow(sess,res){
@@ -2039,6 +2040,39 @@ function copyPanicResult(){
   text+=`판정: ${isPanic?'공황(+)':'공황(-)'}`;
 
   navigator.clipboard.writeText(text).then(()=>toast('✅ 공황 체크 결과 복사!'));
+}
+
+// 컬럼 너비 저장
+function saveColWidths(){
+  const ths=document.querySelectorAll('#tbl-wrap th');
+  if(!ths.length){toast('테이블이 없습니다.');return;}
+  const widths={};
+  ths.forEach((th,i)=>{
+    const w=th.style.width||th.offsetWidth+'px';
+    widths[i]=w;
+  });
+  localStorage.setItem('colWidths',JSON.stringify(widths));
+  toast('✅ 컬럼 간격 저장 완료!');
+}
+
+// 저장된 컬럼 너비 복원
+function restoreColWidths(){
+  const saved=localStorage.getItem('colWidths');
+  if(!saved)return;
+  try{
+    const widths=JSON.parse(saved);
+    const ths=document.querySelectorAll('#tbl-wrap th');
+    ths.forEach((th,i)=>{
+      if(widths[i]){
+        th.style.width=widths[i];
+        const idx=i;
+        document.querySelectorAll('#tbl-wrap tr').forEach(row=>{
+          const td=row.children[idx];
+          if(td)td.style.width=widths[i];
+        });
+      }
+    });
+  }catch(e){}
 }
 
 // 컬럼 리사이즈

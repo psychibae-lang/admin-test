@@ -271,7 +271,7 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
       <button class="btn sm" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="deleteSelected()">🗑️ 선택 삭제</button>
       <button class="btn sm" onclick="clearSelection()">취소</button>
     </div>
-    <div class="tbl-container" id="tbl-container"><div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="tbl-container" id="tbl-container"><div class="tbl-wrap" id="tbl-wrap"><div class="loading"><div class="spinner"></div></div></div></div>
   </div>
 
   <div class="screen content" id="tab-patient" style="font-weight:600;text-align:center">
@@ -281,7 +281,7 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
     </div>
     <div id="pt-result"></div>
   </div>
-</div>
+
   <div class="screen content" id="tab-panic">
     <div class="panic-wrap">
       <div class="panic-counter">
@@ -346,6 +346,7 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
       <button class="panic-copy-btn" onclick="copyPanicResult()">📋 결과 복사 (차트용)</button>
     </div>
   </div>
+</div><!-- /main-app -->
 
 <div class="modal-bg" id="modal-comment" style="display:none" onclick="closeModal('modal-comment')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -1480,7 +1481,7 @@ async function saveComment(){
 async function searchPatient(){
   const q=document.getElementById('pt-search').value.trim();
   if(!q){toast('이름 또는 번호를 입력하세요.');return;}
-  const{data:sessions}=await sb.from('sessions').select('*').ilike('patient_name','%'+q+'%').order('created_at',{ascending:false});
+  const{data:sessions}=await sb.from('sessions').select('*').ilike('patient_name',q).order('created_at',{ascending:false});
   if(!sessions||sessions.length===0){document.getElementById('pt-result').innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return;}
   const{data:results}=await sb.from('results').select('*').in('session_id',sessions.map(s=>s.id));
   document.getElementById('pt-result').innerHTML=sessions.map(sess=>{

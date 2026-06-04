@@ -2273,6 +2273,16 @@ function applyTblAlign(){
         </div>
         <div style="overflow-x:auto;">
           <table id="dv-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px;">
+            <colgroup>
+              <col style="width:90px;">  <!-- 약물코드 -->
+              <col style="width:160px;"> <!-- 약물명 2배 -->
+              <col style="width:80px;">  <!-- 이미지 -->
+              <col style="width:80px;">  <!-- 하루총용량 -->
+              <col style="width:50px;">  <!-- 일투 -->
+              <col style="width:50px;">  <!-- 일수 -->
+              <col style="width:50px;">  <!-- 용법 -->
+              <col>                      <!-- 용법설명 -->
+            </colgroup>
             <thead>
               <tr>
                 <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물코드</th>
@@ -2310,11 +2320,11 @@ function dvApplyZoom(val) {
 var _dvSizeIdx = 2; // 기본=보통(idx 2)
 var _dvSizes = [
   {name:9,  img:36,  label:'아주작게'},
-  {name:11, img:44,  label:'작게'},
-  {name:13, img:57,  label:'보통'},
-  {name:15, img:70,  label:'크게'},
-  {name:17, img:88,  label:'더크게'},
-  {name:20, img:108, label:'가장크게'}
+  {name:10, img:44,  label:'작게'},
+  {name:11, img:57,  label:'보통'},
+  {name:13, img:70,  label:'크게'},
+  {name:15, img:88,  label:'더크게'},
+  {name:18, img:108, label:'가장크게'}
 ];
 function dvAdjustSize(delta) {
   _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));
@@ -2518,7 +2528,7 @@ async function dvLoad() {
       // 약물명
       var tdName = document.createElement('td');
       tdName.className = 'dv-name';
-      tdName.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:'+s.name+'px;transition:font-size 0.15s;';
+      tdName.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:'+s.name+'px;transition:font-size 0.15s;word-break:keep-all;';
       tdName.textContent = d.drug_name || '';
       tr.appendChild(tdName);
 

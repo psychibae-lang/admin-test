@@ -836,11 +836,6 @@ function switchTab(tab){
   if(tab==='drugview')initDrugViewTab();
 }
 
-// 페이지 로드 시 전체 감시 즉시 시작 (탭 이동 없이도 감지)
-window.addEventListener('DOMContentLoaded', function() {
-  dvStartGlobalRealtime();
-});
-
 let selScales=new Set();
 
 function renderCatCards(){
@@ -2213,7 +2208,7 @@ function applyTblAlign(){
 </script>
 <!-- ══ 약물조회 탭 ══ -->
 <div class="screen content" id="tab-drugview">
-  <div style="max-width:900px;">
+  <div style="width:100%;">
     <!-- 검색 -->
     <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;">
       <div>
@@ -2359,45 +2354,53 @@ function dvSetStatus(type, msg) {
   }
 }
 
-function initDrugViewTab() {
-  dvStartGlobalRealtime();
-}
+function initDrugViewTab() { /* 탭 열 때 초기화 필요시 */ }
 
-// ── 전체 감시 실시간 구독 ─────────────────────────────
+// ── 토스트 알림 ──────────────────────────────────────
+function showToast(msg, duration) {
+  var t = document.getElementById('_dvToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_dvToast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+      + 'background:#1e293b;color:#fff;padding:10px 22px;border-radius:24px;'
+      + 'font-size:13px;font-weight:600;z-index:99999;pointer-events:none;'
+      + 'opacity:0;transition:opacity 0.2s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  if (t._timer) clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.opacity = '0'; }, duration || 2800);
+}
 var _dvRealtimeChannel = null;
 var _dvFlashTimer = null;
-var _dvLastChartNo = null;
+var _dvLastChartNo = null;  // 현재 조회 중인 차트번호
 
-function dvStartGlobalRealtime() {
-  if (_dvRealtimeChannel) return; // 이미 구독 중
+function dvStartRealtime(chartNo) {
+  // 기존 채널 해제
+  if (_dvRealtimeChannel) {
+    sb.removeChannel(_dvRealtimeChannel);
+    _dvRealtimeChannel = null;
+  }
+  _dvLastChartNo = chartNo;
 
-  _dvRealtimeChannel = sb.channel('dv-drugs-global')
+  // Supabase Realtime 구독: drugs 테이블의 해당 chart_no 변경 감지
+  _dvRealtimeChannel = sb.channel('dv-drugs-' + chartNo)
     .on('postgres_changes', {
-      event: '*',        // INSERT, UPDATE, DELETE 모두
+      event: '*',           // INSERT, UPDATE, DELETE 모두
       schema: 'public',
-      table: 'drugs'
+      table: 'drugs',
+      filter: 'chart_no=eq.' + chartNo
     }, function(payload) {
-      // 변경된 row에서 chart_no 추출
-      var rec = payload.new || payload.old || {};
-      var chartNo = String(rec.chart_no || '').trim();
-      if (!chartNo) return;
-
-      // 차트번호 입력창에 자동 세팅
-      var inp = document.getElementById('dv-chartno');
-      if (inp) inp.value = chartNo;
-
-      // 약물조회 탭이 현재 활성화 상태면 바로 로드
+      // 약물조회 탭이 활성화 상태일 때만 자동 갱신
       var tabEl = document.getElementById('tab-drugview');
       if (tabEl && tabEl.classList.contains('active')) {
-        dvShowFlash(chartNo);
-        dvLoad();
+        dvShowFlash();
+        dvLoad();  // 자동 재조회
       } else {
-        // 비활성 탭이면 탭 자동 전환 후 로드
-        switchTab('drugview');
-        setTimeout(function() {
-          dvShowFlash(chartNo);
-          dvLoad();
-        }, 80);
+        // 탭이 비활성일 때는 배지 텍스트만 변경
+        dvShowFlash(true);
       }
     })
     .subscribe(function(status) {
@@ -2406,7 +2409,7 @@ function dvStartGlobalRealtime() {
       if (!badge || !txt) return;
       if (status === 'SUBSCRIBED') {
         badge.style.display = 'inline-flex';
-        txt.textContent = '전체 감시 중 — 변경 시 자동 표시';
+        txt.textContent = '실시간 감시 중 (차트 ' + chartNo + ')';
         badge.style.background = '#f0fdf4';
         badge.style.borderColor = '#bbf7d0';
         badge.style.color = '#16a34a';
@@ -2416,30 +2419,29 @@ function dvStartGlobalRealtime() {
         badge.style.background = '#fff5f5';
         badge.style.borderColor = '#fecaca';
         badge.style.color = '#dc2626';
-        // 5초 후 재연결 시도
-        setTimeout(function() {
-          if (_dvRealtimeChannel) {
-            sb.removeChannel(_dvRealtimeChannel);
-            _dvRealtimeChannel = null;
-          }
-          dvStartGlobalRealtime();
-        }, 5000);
       }
     });
 }
 
-function dvShowFlash(chartNo) {
+function dvStopRealtime() {
+  if (_dvRealtimeChannel) {
+    sb.removeChannel(_dvRealtimeChannel);
+    _dvRealtimeChannel = null;
+  }
+  _dvLastChartNo = null;
+  var badge = document.getElementById('dv-rt-badge');
+  if (badge) badge.style.display = 'none';
+}
+
+function dvShowFlash(bgOnly) {
   var flash = document.getElementById('dv-rt-flash');
   if (!flash) return;
   if (_dvFlashTimer) clearTimeout(_dvFlashTimer);
-  flash.textContent = '🔄 차트 ' + chartNo + ' 약물정보 업데이트됨';
   flash.style.display = 'inline-flex';
-  _dvFlashTimer = setTimeout(function() { flash.style.display = 'none'; }, 4000);
+  if (!bgOnly) {
+    _dvFlashTimer = setTimeout(function(){ flash.style.display = 'none'; }, 3000);
+  }
 }
-
-// dvLoad 후 차트번호 기반 개별 구독은 더 이상 불필요 (전체 감시로 대체)
-function dvStartRealtime() {}
-function dvStopRealtime() {}
 
 async function dvLoad() {
   var chartNo = (document.getElementById('dv-chartno').value||'').trim();
@@ -2543,6 +2545,8 @@ async function dvLoad() {
 
     document.getElementById('dv-result').style.display = 'block';
     dvSetStatus('success', '✓ ' + drugs.length + '개 약물 조회 완료');
+    // 조회 성공 → 해당 차트번호 실시간 구독 시작
+    dvStartRealtime(chartNo);
   } catch(e) {
     dvSetStatus('error', '오류: ' + e.message);
   }

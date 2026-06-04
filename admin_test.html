@@ -2309,12 +2309,12 @@ function dvApplyZoom(val) {
 // ── 약물명·이미지 크기 조절 ──
 var _dvSizeIdx = 2; // 기본=보통(idx 2)
 var _dvSizes = [
-  {name:9,  img:36,  label:'아주작게'},
-  {name:11, img:44,  label:'작게'},
-  {name:13, img:56,  label:'보통'},
-  {name:15, img:70,  label:'크게'},
-  {name:17, img:88,  label:'더크게'},
-  {name:20, img:108, label:'가장크게'}
+  {name:9,  img:24,  label:'아주작게'},
+  {name:11, img:30,  label:'작게'},
+  {name:13, img:36,  label:'보통'},
+  {name:15, img:48,  label:'크게'},
+  {name:17, img:60,  label:'더크게'},
+  {name:20, img:80,  label:'가장크게'}
 ];
 function dvAdjustSize(delta) {
   _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));
@@ -2354,7 +2354,10 @@ function dvSetStatus(type, msg) {
   }
 }
 
-function initDrugViewTab() { /* 탭 열 때 초기화 필요시 */ }
+function initDrugViewTab() { dvStartRealtime(''); }
+
+// 페이지 열자마자 전체 감시 시작
+window.addEventListener('DOMContentLoaded', function(){ dvStartRealtime(''); });
 
 // ── 토스트 알림 ──────────────────────────────────────
 function showToast(msg, duration) {
@@ -2375,32 +2378,43 @@ function showToast(msg, duration) {
 }
 var _dvRealtimeChannel = null;
 var _dvFlashTimer = null;
-var _dvLastChartNo = null;  // 현재 조회 중인 차트번호
+var _dvLastChartNo = null;
 
 function dvStartRealtime(chartNo) {
-  // 기존 채널 해제
+  // 기존 단일 차트 채널 해제 후 전체 감시로 업그레이드
   if (_dvRealtimeChannel) {
     sb.removeChannel(_dvRealtimeChannel);
     _dvRealtimeChannel = null;
   }
   _dvLastChartNo = chartNo;
 
-  // Supabase Realtime 구독: drugs 테이블의 해당 chart_no 변경 감지
-  _dvRealtimeChannel = sb.channel('dv-drugs-' + chartNo)
+  _dvRealtimeChannel = sb.channel('dv-drugs-global')
     .on('postgres_changes', {
-      event: '*',           // INSERT, UPDATE, DELETE 모두
+      event: '*',
       schema: 'public',
-      table: 'drugs',
-      filter: 'chart_no=eq.' + chartNo
+      table: 'drugs'
+      // filter 없음 → 모든 차트 변경 감지
     }, function(payload) {
-      // 약물조회 탭이 활성화 상태일 때만 자동 갱신
+      var rec = payload.new || payload.old || {};
+      var changedChart = String(rec.chart_no || '').trim();
+      if (!changedChart) return;
+
+      // 차트번호 입력창 자동 세팅
+      var inp = document.getElementById('dv-chartno');
+      if (inp) inp.value = changedChart;
+      _dvLastChartNo = changedChart;
+
+      // 약물조회 탭 활성화 + 자동 로드
       var tabEl = document.getElementById('tab-drugview');
       if (tabEl && tabEl.classList.contains('active')) {
-        dvShowFlash();
-        dvLoad();  // 자동 재조회
+        dvShowFlash(changedChart);
+        dvLoad();
       } else {
-        // 탭이 비활성일 때는 배지 텍스트만 변경
-        dvShowFlash(true);
+        switchTab('drugview');
+        setTimeout(function() {
+          dvShowFlash(changedChart);
+          dvLoad();
+        }, 80);
       }
     })
     .subscribe(function(status) {
@@ -2409,7 +2423,7 @@ function dvStartRealtime(chartNo) {
       if (!badge || !txt) return;
       if (status === 'SUBSCRIBED') {
         badge.style.display = 'inline-flex';
-        txt.textContent = '실시간 감시 중 (차트 ' + chartNo + ')';
+        txt.textContent = '전체 감시 중 — 변경 시 자동 표시';
         badge.style.background = '#f0fdf4';
         badge.style.borderColor = '#bbf7d0';
         badge.style.color = '#16a34a';
@@ -2419,6 +2433,10 @@ function dvStartRealtime(chartNo) {
         badge.style.background = '#fff5f5';
         badge.style.borderColor = '#fecaca';
         badge.style.color = '#dc2626';
+        setTimeout(function() {
+          if (_dvRealtimeChannel) { sb.removeChannel(_dvRealtimeChannel); _dvRealtimeChannel = null; }
+          dvStartRealtime(_dvLastChartNo || '');
+        }, 5000);
       }
     });
 }
@@ -2433,14 +2451,13 @@ function dvStopRealtime() {
   if (badge) badge.style.display = 'none';
 }
 
-function dvShowFlash(bgOnly) {
+function dvShowFlash(chartNo) {
   var flash = document.getElementById('dv-rt-flash');
   if (!flash) return;
   if (_dvFlashTimer) clearTimeout(_dvFlashTimer);
+  flash.textContent = '🔄 차트 ' + chartNo + ' 약물정보 업데이트됨';
   flash.style.display = 'inline-flex';
-  if (!bgOnly) {
-    _dvFlashTimer = setTimeout(function(){ flash.style.display = 'none'; }, 3000);
-  }
+  _dvFlashTimer = setTimeout(function(){ flash.style.display = 'none'; }, 4000);
 }
 
 async function dvLoad() {
@@ -2494,27 +2511,27 @@ async function dvLoad() {
 
       // 약물코드
       var tdCode = document.createElement('td');
-      tdCode.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;';
+      tdCode.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;';
       tdCode.innerHTML = '<span style="font-family:monospace;font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 7px;border-radius:4px;border:1px solid #bfdbfe;">'+(d.drug_code||'')+'</span>';
       tr.appendChild(tdCode);
 
       // 약물명
       var tdName = document.createElement('td');
       tdName.className = 'dv-name';
-      tdName.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:'+s.name+'px;transition:font-size 0.15s;';
+      tdName.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:'+s.name+'px;transition:font-size 0.15s;';
       tdName.textContent = d.drug_name || '';
       tr.appendChild(tdName);
 
       // 이미지
       var tdImg = document.createElement('td');
       tdImg.className = 'dv-img';
-      tdImg.style.cssText = 'padding:5px 10px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;';
+      tdImg.style.cssText = 'padding:2px 10px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;';
       if (imgUrl) {
         var img = document.createElement('img');
         img.src = imgUrl;
         img.crossOrigin = 'anonymous';
         img.alt = d.drug_name || '';
-        img.style.cssText = 'width:'+s.img+'px;height:'+s.img+'px;object-fit:contain;border-radius:6px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;transition:width 0.15s,height 0.15s;';
+        img.style.cssText = 'width:'+s.img+'px;height:'+s.img+'px;object-fit:contain;border-radius:4px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;transition:width 0.15s,height 0.15s;';
         img.onerror = function(){ this.style.display='none'; };
         tdImg.appendChild(img);
       } else {
@@ -2524,19 +2541,19 @@ async function dvLoad() {
 
       // 하루총용량
       var tdTotal = document.createElement('td');
-      tdTotal.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;background:#fefce8;';
+      tdTotal.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;background:#fefce8;';
       tdTotal.innerHTML = '<span style="font-size:15px;font-weight:800;color:#b45309;">'+totalDose+'</span>';
       tr.appendChild(tdTotal);
 
       // 일투·일수·용법·용법설명
       [d.daily_freq||'', d.days||'', d.method||''].forEach(function(v){
         var td = document.createElement('td');
-        td.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;';
+        td.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;';
         td.textContent = v;
         tr.appendChild(td);
       });
       var tdDesc = document.createElement('td');
-      tdDesc.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;';
+      tdDesc.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;';
       tdDesc.textContent = dvMethodDesc(d.method);
       tr.appendChild(tdDesc);
 

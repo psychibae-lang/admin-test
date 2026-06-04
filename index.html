@@ -2223,12 +2223,29 @@ function applyTblAlign(){
 
     <!-- 결과 카드 -->
     <div id="dv-result" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:16px;font-weight:800;color:#1a1a1a;">차트 <span id="dv-chart-label" style="color:#2563eb;font-family:monospace;"></span></span>
           <span id="dv-date-badge" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:20px;padding:4px 12px;font-size:12px;color:#1d4ed8;font-weight:600;">📅 <span id="dv-date-label"></span></span>
         </div>
         <button onclick="dvSaveImage()" class="btn" style="border-color:#7c3aed;color:#7c3aed;font-size:12px;">🖼️ 이미지 저장</button>
+      </div>
+
+      <!-- 화면 크기 / 약물명·이미지 크기 조절 -->
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8faff;border:1px solid #e0e9ff;border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:#666;font-weight:600;white-space:nowrap;">🔍 화면 크기</span>
+        <input type="range" id="dv-zoom-slider" min="70" max="160" value="100" step="5"
+          style="flex:1;min-width:90px;max-width:180px;accent-color:#2563eb;cursor:pointer;"
+          oninput="dvApplyZoom(this.value)">
+        <span id="dv-zoom-label" style="font-size:12px;font-weight:700;color:#2563eb;min-width:36px;">100%</span>
+        <button onclick="dvApplyZoom(100);document.getElementById('dv-zoom-slider').value=100;"
+          style="font-size:11px;padding:3px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;">초기화</button>
+        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">약물명·이미지</span>
+        <button onclick="dvAdjustSize(-1)"
+          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
+        <span id="dv-size-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:40px;text-align:center;">보통</span>
+        <button onclick="dvAdjustSize(1)"
+          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
       </div>
 
       <!-- 인쇄/캡처 영역 -->
@@ -2269,6 +2286,35 @@ function applyTblAlign(){
 // ══ 약물조회 탭 ══════════════════════════════════════
 var _dvCodeMap = {};
 
+// ── 화면 zoom ──
+function dvApplyZoom(val) {
+  val = parseInt(val);
+  var result = document.getElementById('dv-result');
+  if (result) result.style.zoom = val / 100;
+  var lbl = document.getElementById('dv-zoom-label');
+  if (lbl) lbl.textContent = val + '%';
+}
+
+// ── 약물명·이미지 크기 조절 ──
+var _dvSizeIdx = 2; // 기본=보통(idx 2)
+var _dvSizes = [
+  {name:9,  img:36,  label:'아주작게'},
+  {name:11, img:44,  label:'작게'},
+  {name:13, img:56,  label:'보통'},
+  {name:15, img:70,  label:'크게'},
+  {name:17, img:88,  label:'더크게'},
+  {name:20, img:108, label:'가장크게'}
+];
+function dvAdjustSize(delta) {
+  _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));
+  var s = _dvSizes[_dvSizeIdx];
+  document.querySelectorAll('#dv-tbody td.dv-name').forEach(function(td){ td.style.fontSize = s.name + 'px'; });
+  document.querySelectorAll('#dv-tbody td.dv-img img').forEach(function(img){ img.style.width = s.img + 'px'; img.style.height = s.img + 'px'; });
+  var lbl = document.getElementById('dv-size-label');
+  if (lbl) lbl.textContent = s.label;
+}
+function dvCurSize() { return _dvSizes[_dvSizeIdx]; }
+
 function dvMethodDesc(code) {
   var c = (code||'').toLowerCase().trim();
   var m = {'b1':'오전','b2':'점심','b3':'저녁','b4':'취침전',
@@ -2305,7 +2351,6 @@ async function dvLoad() {
   dvSetStatus('loading', '⏳ 조회 중...');
   document.getElementById('dv-result').style.display = 'none';
   try {
-    // drugs 조회
     var res = await sb.from('drugs').select('*').eq('chart_no', chartNo).order('id');
     if (res.error) throw res.error;
     var drugs = res.data || [];
@@ -2339,25 +2384,64 @@ async function dvLoad() {
     document.getElementById('dv-print-chart').textContent = chartNo;
     document.getElementById('dv-print-date').textContent = dateLabel;
 
-    // 테이블 렌더
+    // 테이블 렌더 (크기 조절 클래스 적용)
     var tbody = document.getElementById('dv-tbody');
     tbody.innerHTML = '';
+    var s = dvCurSize();
     drugs.forEach(function(d, idx) {
       var imgUrl = _dvCodeMap[d.drug_code] || '';
       var totalDose = (function(dose,freq){var dv=parseFloat(dose),fv=parseFloat(freq);return (!isNaN(dv)&&!isNaN(fv))?(dv*fv):((dose||'')+(freq?'×'+freq:''));})(d.dose, d.daily_freq);
       var tr = document.createElement('tr');
       tr.style.background = idx%2===0 ? '#fff' : '#f9fafb';
-      tr.innerHTML = ''
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;"><span style="font-family:monospace;font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 7px;border-radius:4px;border:1px solid #bfdbfe;">'+(d.drug_code||'')+'</span></td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:13px;">'+(d.drug_name||'')+'</td>'
-        + '<td style="padding:5px 10px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;">'
-          + (imgUrl ? '<img src="'+imgUrl+'" crossorigin="anonymous" alt="'+(d.drug_name||'')+'" style="width:52px;height:52px;object-fit:contain;border-radius:6px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;" onerror="this.style.display=\'none\'">' : '<span style="color:#ddd;font-size:18px;">—</span>')
-          + '</td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;background:#fefce8;"><span style="font-size:15px;font-weight:800;color:#b45309;">'+totalDose+'</span></td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;">'+(d.daily_freq||'')+'</td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;">'+(d.days||'')+'</td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;">'+(d.method||'')+'</td>'
-        + '<td style="padding:7px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;">'+dvMethodDesc(d.method)+'</td>';
+
+      // 약물코드
+      var tdCode = document.createElement('td');
+      tdCode.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;';
+      tdCode.innerHTML = '<span style="font-family:monospace;font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 7px;border-radius:4px;border:1px solid #bfdbfe;">'+(d.drug_code||'')+'</span>';
+      tr.appendChild(tdCode);
+
+      // 약물명
+      var tdName = document.createElement('td');
+      tdName.className = 'dv-name';
+      tdName.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:'+s.name+'px;transition:font-size 0.15s;';
+      tdName.textContent = d.drug_name || '';
+      tr.appendChild(tdName);
+
+      // 이미지
+      var tdImg = document.createElement('td');
+      tdImg.className = 'dv-img';
+      tdImg.style.cssText = 'padding:5px 10px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;';
+      if (imgUrl) {
+        var img = document.createElement('img');
+        img.src = imgUrl;
+        img.crossOrigin = 'anonymous';
+        img.alt = d.drug_name || '';
+        img.style.cssText = 'width:'+s.img+'px;height:'+s.img+'px;object-fit:contain;border-radius:6px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;transition:width 0.15s,height 0.15s;';
+        img.onerror = function(){ this.style.display='none'; };
+        tdImg.appendChild(img);
+      } else {
+        tdImg.innerHTML = '<span style="color:#ddd;font-size:18px;">—</span>';
+      }
+      tr.appendChild(tdImg);
+
+      // 하루총용량
+      var tdTotal = document.createElement('td');
+      tdTotal.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;background:#fefce8;';
+      tdTotal.innerHTML = '<span style="font-size:15px;font-weight:800;color:#b45309;">'+totalDose+'</span>';
+      tr.appendChild(tdTotal);
+
+      // 일투·일수·용법·용법설명
+      [d.daily_freq||'', d.days||'', d.method||''].forEach(function(v){
+        var td = document.createElement('td');
+        td.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;';
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+      var tdDesc = document.createElement('td');
+      tdDesc.style.cssText = 'padding:7px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;';
+      tdDesc.textContent = dvMethodDesc(d.method);
+      tr.appendChild(tdDesc);
+
       tbody.appendChild(tr);
     });
 
@@ -2374,12 +2458,22 @@ async function dvSaveImage() {
   if (typeof html2canvas === 'undefined') { alert('html2canvas 라이브러리가 없습니다.'); return; }
   try {
     showToast('🖼️ 이미지 생성 중...');
+    // 이미지 로딩 대기
     var imgs = area.querySelectorAll('img');
     await Promise.all(Array.from(imgs).map(function(img){
       if (img.complete) return Promise.resolve();
       return new Promise(function(res){ img.onload=res; img.onerror=res; });
     }));
-    var canvas = await html2canvas(area, { scale:2, backgroundColor:'#ffffff', useCORS:true, allowTaint:false });
+    // 현재 화면 zoom 값 읽기 → scale에 반영
+    var result = document.getElementById('dv-result');
+    var zoomNum = parseFloat(result.style.zoom) || 1;
+    var canvas = await html2canvas(area, {
+      scale: Math.round(zoomNum * 2 * 10) / 10,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    });
     var link = document.createElement('a');
     var cn = (document.getElementById('dv-chartno').value||'drug').trim();
     var ds = document.getElementById('dv-date-label').textContent||'';

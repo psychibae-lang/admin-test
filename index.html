@@ -2275,8 +2275,8 @@ function applyTblAlign(){
           <table id="dv-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px;">
             <colgroup>
               <col style="width:90px;">  <!-- 약물코드 -->
-              <col style="width:160px;"> <!-- 약물명 2배 -->
-              <col style="width:80px;">  <!-- 이미지 -->
+              <col style="width:160px;"> <!-- 약물명 -->
+              <col style="width:130px;"> <!-- 이미지 60% 확대 -->
               <col style="width:80px;">  <!-- 하루총용량 -->
               <col style="width:50px;">  <!-- 일투 -->
               <col style="width:50px;">  <!-- 일수 -->
@@ -2319,18 +2319,24 @@ function dvApplyZoom(val) {
 // ── 약물명·이미지 크기 조절 ──
 var _dvSizeIdx = 2; // 기본=보통(idx 2)
 var _dvSizes = [
-  {name:9,  img:36,  label:'아주작게'},
+  {name:9,  img:32,  label:'아주작게'},
   {name:10, img:44,  label:'작게'},
-  {name:11, img:57,  label:'보통'},
-  {name:13, img:70,  label:'크게'},
-  {name:15, img:88,  label:'더크게'},
-  {name:18, img:108, label:'가장크게'}
+  {name:11, img:62,  label:'보통'},
+  {name:13, img:80,  label:'크게'},
+  {name:15, img:100, label:'더크게'},
+  {name:18, img:130, label:'가장크게'}
 ];
 function dvAdjustSize(delta) {
   _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));
   var s = _dvSizes[_dvSizeIdx];
   document.querySelectorAll('#dv-tbody td.dv-name').forEach(function(td){ td.style.fontSize = s.name + 'px'; });
-  document.querySelectorAll('#dv-tbody td.dv-img img').forEach(function(img){ img.style.width = s.img + 'px'; img.style.height = s.img + 'px'; });
+  document.querySelectorAll('#dv-tbody td.dv-img').forEach(function(td){
+    td.style.height = s.img + 'px';
+    td.style.maxHeight = s.img + 'px';
+  });
+  document.querySelectorAll('#dv-tbody td.dv-img img').forEach(function(img){
+    img.style.height = s.img + 'px';
+  });
   var lbl = document.getElementById('dv-size-label');
   if (lbl) lbl.textContent = s.label;
 }
@@ -2535,13 +2541,14 @@ async function dvLoad() {
       // 이미지
       var tdImg = document.createElement('td');
       tdImg.className = 'dv-img';
-      tdImg.style.cssText = 'padding:2px 10px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;';
+      tdImg.style.cssText = 'padding:2px 4px;border-bottom:1px solid #f0f0ee;text-align:center;vertical-align:middle;height:62px;max-height:62px;overflow:hidden;';
       if (imgUrl) {
         var img = document.createElement('img');
         img.src = imgUrl;
         img.crossOrigin = 'anonymous';
         img.alt = d.drug_name || '';
-        img.style.cssText = 'width:'+s.img+'px;height:'+s.img+'px;object-fit:contain;border-radius:4px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;transition:width 0.15s,height 0.15s;';
+        // 너비는 칸 꽉 채우되 높이는 행 높이(58px) 안에서만
+        img.style.cssText = 'width:100%;height:58px;object-fit:contain;border-radius:4px;border:1px solid #e8e8e8;background:#f7f7f5;display:block;margin:0 auto;transition:height 0.15s;';
         img.onerror = function(){ this.style.display='none'; };
         tdImg.appendChild(img);
       } else {

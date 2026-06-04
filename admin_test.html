@@ -2242,7 +2242,7 @@ function applyTblAlign(){
         <button onclick="dvSaveImage()" class="btn" style="border-color:#7c3aed;color:#7c3aed;font-size:12px;">🖼️ 이미지 저장</button>
       </div>
 
-      <!-- 화면 크기 / 약물명·이미지 크기 조절 -->
+      <!-- 화면 크기 / 글자·이미지 독립 조절 -->
       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8faff;border:1px solid #e0e9ff;border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
         <span style="font-size:11px;color:#666;font-weight:600;white-space:nowrap;">🔍 화면 크기</span>
         <input type="range" id="dv-zoom-slider" min="70" max="160" value="100" step="5"
@@ -2251,11 +2251,19 @@ function applyTblAlign(){
         <span id="dv-zoom-label" style="font-size:12px;font-weight:700;color:#2563eb;min-width:36px;">100%</span>
         <button onclick="dvApplyZoom(100);document.getElementById('dv-zoom-slider').value=100;"
           style="font-size:11px;padding:3px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;">초기화</button>
-        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">약물명·이미지</span>
-        <button onclick="dvAdjustSize(-1)"
+        <!-- 글자 크기 -->
+        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🔤 글자</span>
+        <button onclick="dvAdjustText(-1)"
           style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
-        <span id="dv-size-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:40px;text-align:center;">보통</span>
-        <button onclick="dvAdjustSize(1)"
+        <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+        <button onclick="dvAdjustText(1)"
+          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
+        <!-- 이미지 크기 -->
+        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🖼 이미지</span>
+        <button onclick="dvAdjustImg(-1)"
+          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
+        <span id="dv-img-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+        <button onclick="dvAdjustImg(1)"
           style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
       </div>
 
@@ -2316,31 +2324,54 @@ function dvApplyZoom(val) {
   if (lbl) lbl.textContent = val + '%';
 }
 
-// ── 약물명·이미지 크기 조절 ──
-var _dvSizeIdx = 2; // 기본=보통(idx 2)
-var _dvSizes = [
-  {name:9,  img:32,  label:'아주작게'},
-  {name:10, img:44,  label:'작게'},
-  {name:11, img:62,  label:'보통'},
-  {name:13, img:80,  label:'크게'},
-  {name:15, img:100, label:'더크게'},
-  {name:18, img:130, label:'가장크게'}
+// ── 글자 크기 독립 조절 ──
+var _dvTextIdx = 2;
+var _dvTextSizes = [
+  {size:9,  label:'아주작게'},
+  {size:11, label:'작게'},
+  {size:14, label:'보통'},   // 기본 14px (기존 11px 대비 ~40% 상향)
+  {size:16, label:'크게'},
+  {size:19, label:'더크게'},
+  {size:23, label:'가장크게'}
 ];
-function dvAdjustSize(delta) {
-  _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));
-  var s = _dvSizes[_dvSizeIdx];
-  document.querySelectorAll('#dv-tbody td.dv-name').forEach(function(td){ td.style.fontSize = s.name + 'px'; });
-  document.querySelectorAll('#dv-tbody td.dv-img').forEach(function(td){
-    td.style.height = s.img + 'px';
-    td.style.maxHeight = s.img + 'px';
-  });
-  document.querySelectorAll('#dv-tbody td.dv-img img').forEach(function(img){
-    img.style.height = s.img + 'px';
-  });
-  var lbl = document.getElementById('dv-size-label');
+function dvAdjustText(delta) {
+  _dvTextIdx = Math.max(0, Math.min(_dvTextSizes.length - 1, _dvTextIdx + delta));
+  var s = _dvTextSizes[_dvTextIdx];
+  document.querySelectorAll('#dv-tbody td.dv-name').forEach(function(td){ td.style.fontSize = s.size + 'px'; });
+  var lbl = document.getElementById('dv-text-label');
   if (lbl) lbl.textContent = s.label;
 }
-function dvCurSize() { return _dvSizes[_dvSizeIdx]; }
+
+// ── 이미지 크기 독립 조절 ──
+var _dvImgIdx = 2;
+var _dvImgSizes = [
+  {size:32,  label:'아주작게'},
+  {size:44,  label:'작게'},
+  {size:62,  label:'보통'},
+  {size:80,  label:'크게'},
+  {size:100, label:'더크게'},
+  {size:130, label:'가장크게'}
+];
+function dvAdjustImg(delta) {
+  _dvImgIdx = Math.max(0, Math.min(_dvImgSizes.length - 1, _dvImgIdx + delta));
+  var s = _dvImgSizes[_dvImgIdx];
+  document.querySelectorAll('#dv-tbody td.dv-img').forEach(function(td){
+    td.style.height = s.size + 'px';
+    td.style.maxHeight = s.size + 'px';
+  });
+  document.querySelectorAll('#dv-tbody td.dv-img img').forEach(function(img){
+    img.style.height = s.size + 'px';
+  });
+  var lbl = document.getElementById('dv-img-label');
+  if (lbl) lbl.textContent = s.label;
+}
+
+// 하위 호환 (dvCurSize는 렌더 시 초기값 참조용)
+function dvCurSize() {
+  return { name: _dvTextSizes[_dvTextIdx].size, img: _dvImgSizes[_dvImgIdx].size };
+}
+// 기존 단일 함수 — 호출부 호환용 빈 함수
+function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
 function dvMethodDesc(code) {
   var c = (code||'').toLowerCase().trim();

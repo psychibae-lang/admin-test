@@ -2309,12 +2309,12 @@ function dvApplyZoom(val) {
 // ── 약물명·이미지 크기 조절 ──
 var _dvSizeIdx = 2; // 기본=보통(idx 2)
 var _dvSizes = [
-  {name:9,  img:24,  label:'아주작게'},
-  {name:11, img:30,  label:'작게'},
-  {name:13, img:36,  label:'보통'},
-  {name:15, img:48,  label:'크게'},
-  {name:17, img:60,  label:'더크게'},
-  {name:20, img:80,  label:'가장크게'}
+  {name:9,  img:36,  label:'아주작게'},
+  {name:11, img:44,  label:'작게'},
+  {name:13, img:57,  label:'보통'},
+  {name:15, img:70,  label:'크게'},
+  {name:17, img:88,  label:'더크게'},
+  {name:20, img:108, label:'가장크게'}
 ];
 function dvAdjustSize(delta) {
   _dvSizeIdx = Math.max(0, Math.min(_dvSizes.length - 1, _dvSizeIdx + delta));

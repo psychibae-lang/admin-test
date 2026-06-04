@@ -2487,5 +2487,132 @@ async function dvSaveImage() {
 }
 </script>
 
+<!-- ══ 탭 영역 드래그 리사이즈 ══ -->
+<style>
+.trh-e {
+  position: fixed; width: 6px; cursor: ew-resize;
+  background: transparent; pointer-events: all;
+  z-index: 9001; transition: background 0.15s; border-radius: 3px;
+}
+.trh-s {
+  position: fixed; height: 6px; cursor: ns-resize;
+  background: transparent; pointer-events: all;
+  z-index: 9001; transition: background 0.15s; border-radius: 3px;
+}
+.trh-se {
+  position: fixed; width: 14px; height: 14px; cursor: nwse-resize;
+  background: transparent; pointer-events: all;
+  z-index: 9002; border-radius: 3px;
+}
+.trh-e:hover, .trh-e.active { background: rgba(79,142,247,0.35); }
+.trh-s:hover, .trh-s.active { background: rgba(79,142,247,0.35); }
+.trh-se:hover, .trh-se.active { background: rgba(79,142,247,0.5); border-radius: 0 0 4px 0; }
+body.trh-resizing { user-select: none; }
+</style>
+<script>
+(function(){
+  var STORE_KEY = 'tabResize_admin_v1';
+  var TABS = ['issue','results','patient','panic','drugview'];
+  function loadSizes(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){return {};} }
+  function saveSizes(s){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(s)); }catch(e){} }
+
+  var _curTab = 'issue';
+
+  var hE  = document.createElement('div'); hE.className  = 'trh-e';
+  var hS  = document.createElement('div'); hS.className  = 'trh-s';
+  var hSE = document.createElement('div'); hSE.className = 'trh-se';
+  document.body.appendChild(hE);
+  document.body.appendChild(hS);
+  document.body.appendChild(hSE);
+
+  function getActiveEl(){
+    return _curTab ? document.getElementById('tab-'+_curTab) : null;
+  }
+
+  function positionHandles(){
+    var el = getActiveEl();
+    if(!el || !el.classList.contains('active')){ hideHandles(); return; }
+    var rect = el.getBoundingClientRect();
+    hE.style.top    = Math.max(rect.top, 60) + 'px';
+    hE.style.left   = (rect.right - 3) + 'px';
+    hE.style.height = (rect.height - 10) + 'px';
+    hE.style.display = 'block';
+    hS.style.top    = (rect.bottom - 3) + 'px';
+    hS.style.left   = rect.left + 'px';
+    hS.style.width  = (rect.width - 10) + 'px';
+    hS.style.display = 'block';
+    hSE.style.top   = (rect.bottom - 7) + 'px';
+    hSE.style.left  = (rect.right - 7) + 'px';
+    hSE.style.display = 'block';
+  }
+  function hideHandles(){
+    hE.style.display = hS.style.display = hSE.style.display = 'none';
+  }
+
+  var _drag = null;
+  function startDrag(e, type){
+    var el = getActiveEl(); if(!el) return;
+    e.preventDefault();
+    var rect = el.getBoundingClientRect();
+    _drag = { type:type, startX:e.clientX, startY:e.clientY,
+               startW:rect.width, startH:rect.height, el:el, tabId:_curTab };
+    document.body.classList.add('trh-resizing');
+    hE.classList.add('active'); hS.classList.add('active'); hSE.classList.add('active');
+  }
+  hE.addEventListener('mousedown',  function(e){ startDrag(e,'e'); });
+  hS.addEventListener('mousedown',  function(e){ startDrag(e,'s'); });
+  hSE.addEventListener('mousedown', function(e){ startDrag(e,'se'); });
+
+  document.addEventListener('mousemove', function(e){
+    if(!_drag) return;
+    var dx = e.clientX - _drag.startX, dy = e.clientY - _drag.startY, el = _drag.el;
+    if(_drag.type==='e'||_drag.type==='se'){
+      var nw = Math.max(320, _drag.startW + dx);
+      el.style.maxWidth = nw+'px'; el.style.width = nw+'px';
+    }
+    if(_drag.type==='s'||_drag.type==='se'){
+      var nh = Math.max(200, _drag.startH + dy);
+      el.style.minHeight = nh+'px'; el.style.height = nh+'px';
+    }
+    positionHandles();
+  });
+  document.addEventListener('mouseup', function(){
+    if(!_drag) return;
+    var sizes = loadSizes();
+    sizes[_drag.tabId] = { w:_drag.el.style.width, h:_drag.el.style.minHeight };
+    saveSizes(sizes);
+    _drag = null;
+    document.body.classList.remove('trh-resizing');
+    hE.classList.remove('active'); hS.classList.remove('active'); hSE.classList.remove('active');
+    positionHandles();
+  });
+
+  // switchTab 후킹
+  var _orig = window.switchTab;
+  window.switchTab = function(tab){
+    _curTab = tab;
+    if(_orig) _orig.apply(this, arguments);
+    var sizes = loadSizes();
+    var el = document.getElementById('tab-'+tab);
+    if(el && sizes[tab]){
+      if(sizes[tab].w){ el.style.maxWidth = sizes[tab].w; el.style.width = sizes[tab].w; }
+      if(sizes[tab].h){ el.style.minHeight = sizes[tab].h; el.style.height = sizes[tab].h; }
+    }
+    setTimeout(positionHandles, 30);
+  };
+
+  window.addEventListener('scroll', positionHandles, {passive:true});
+  window.addEventListener('resize', positionHandles, {passive:true});
+
+  window.addEventListener('DOMContentLoaded', function(){
+    TABS.forEach(function(t){
+      var el = document.getElementById('tab-'+t);
+      if(el && el.classList.contains('active')){ _curTab = t; }
+    });
+    positionHandles();
+  });
+})();
+</script>
+
 </body>
 </html>

@@ -2209,13 +2209,27 @@ function applyTblAlign(){
 <!-- ══ 약물조회 탭 ══ -->
 <style>
 .dv-split-wrap { display:flex; gap:0; align-items:flex-start; width:100%; }
-.dv-left-pane  { flex:1; min-width:0; }
+.dv-left-pane  { flex:1; min-width:0; overflow:hidden; }
+.dv-divider {
+  width:6px; flex-shrink:0; cursor:col-resize;
+  background:transparent; position:relative;
+  align-self:stretch; margin:0 4px;
+  border-radius:3px; transition:background 0.15s;
+  display:none;
+}
+.dv-divider::after {
+  content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:2px; height:40px; background:#c8d5ea; border-radius:2px;
+}
+.dv-divider:hover, .dv-divider.dragging { background:rgba(59,110,248,0.20); }
+.dv-divider:hover::after, .dv-divider.dragging::after { background:#3b6ef8; }
+.dv-divider.visible { display:block; }
 .dv-right-pane {
-  width:380px; min-width:320px; max-width:420px;
+  width:380px; min-width:260px; max-width:600px;
   flex-shrink:0;
-  border-left:2px solid #e8eef8;
-  padding-left:18px;
-  margin-left:18px;
+  border-left:none;
+  padding-left:10px;
+  margin-left:0;
   position:sticky;
   top:60px;
   max-height:calc(100vh - 80px);
@@ -2223,6 +2237,20 @@ function applyTblAlign(){
   display:none;
 }
 .dv-right-pane.visible { display:block; }
+/* 오른쪽 패널 크기 조절 바 */
+.hd-size-bar {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 10px; background:#f4f6fb; border:1px solid #e4e8f0;
+  border-radius:8px; margin-bottom:10px; flex-wrap:wrap;
+}
+.hd-size-bar-lbl { font-size:10px; color:#888; font-weight:600; white-space:nowrap; }
+.hd-size-btn {
+  width:22px; height:22px; border:1px solid #ddd; border-radius:4px;
+  background:#fff; cursor:pointer; font-size:13px; line-height:1; font-weight:700;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.hd-size-btn:hover { background:#eff6ff; border-color:#bfdbfe; }
+.hd-size-val { font-size:10px; font-weight:700; color:#3b6ef8; min-width:24px; text-align:center; }
 
 /* Han_drugs 패널 내부 스타일 */
 .hd-panel { font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif; }
@@ -2432,12 +2460,28 @@ function applyTblAlign(){
       </div>
     </div><!-- /dv-left-pane -->
 
+    <!-- ─── 가운데 드래그 구분선 ─── -->
+    <div class="dv-divider" id="dv-divider"></div>
+
     <!-- ─── 오른쪽: 약물 상세정보 패널 (Han_drugs) ─── -->
     <div class="dv-right-pane" id="hd-panel">
       <div class="hd-panel">
         <div class="hd-panel-header">
           <span class="hd-panel-title">💊 약물 상세정보</span>
           <button class="hd-panel-close" onclick="hdClosePanel()" title="닫기">✕</button>
+        </div>
+
+        <!-- 오른쪽 패널 글자/이미지 크기 조절 -->
+        <div class="hd-size-bar" id="hd-size-bar">
+          <span class="hd-size-bar-lbl">🔤 글자</span>
+          <button class="hd-size-btn" onclick="hdAdjustText(-1)">−</button>
+          <span class="hd-size-val" id="hd-text-val">보통</span>
+          <button class="hd-size-btn" onclick="hdAdjustText(1)">＋</button>
+          <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
+          <span class="hd-size-bar-lbl">🖼 이미지</span>
+          <button class="hd-size-btn" onclick="hdAdjustImg(-1)">−</button>
+          <span class="hd-size-val" id="hd-img-val">보통</span>
+          <button class="hd-size-btn" onclick="hdAdjustImg(1)">＋</button>
         </div>
 
         <!-- 검색 -->
@@ -2554,6 +2598,100 @@ function dvCurSize() {
 }
 // 기존 단일 함수 — 호출부 호환용 빈 함수
 function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
+
+// ── 오른쪽 패널 글자 크기 조절 ──
+var _hdTextIdx = 1;
+var _hdTextSizes = [
+  {size:10, label:'작게'},
+  {size:12, label:'보통'},
+  {size:14, label:'크게'},
+  {size:16, label:'더크게'},
+  {size:18, label:'최대'}
+];
+function hdAdjustText(delta) {
+  _hdTextIdx = Math.max(0, Math.min(_hdTextSizes.length - 1, _hdTextIdx + delta));
+  var s = _hdTextSizes[_hdTextIdx];
+  var panel = document.getElementById('hd-panel');
+  if (panel) {
+    panel.querySelectorAll('.hd-info-text, .hd-detail-name, .hd-drug-name, .hd-tab-pane p, .hd-tab-pane li').forEach(function(el){
+      el.style.fontSize = s.size + 'px';
+    });
+    // hd-detail-name은 조금 더 크게
+    panel.querySelectorAll('.hd-detail-name').forEach(function(el){ el.style.fontSize = (s.size + 2) + 'px'; });
+  }
+  var lbl = document.getElementById('hd-text-val');
+  if (lbl) lbl.textContent = s.label;
+}
+
+// ── 오른쪽 패널 이미지 크기 조절 ──
+var _hdImgIdx = 1;
+var _hdImgSizes = [
+  {size:60,  label:'작게'},
+  {size:100, label:'보통'},
+  {size:140, label:'크게'},
+  {size:180, label:'더크게'},
+  {size:220, label:'최대'}
+];
+function hdAdjustImg(delta) {
+  _hdImgIdx = Math.max(0, Math.min(_hdImgSizes.length - 1, _hdImgIdx + delta));
+  var s = _hdImgSizes[_hdImgIdx];
+  var img = document.getElementById('hd-detail-img');
+  if (img) { img.style.maxHeight = s.size + 'px'; }
+  var lbl = document.getElementById('hd-img-val');
+  if (lbl) lbl.textContent = s.label;
+}
+
+// ── 가운데 구분선 드래그 리사이즈 ──
+(function(){
+  function initDividerDrag(){
+    var divider = document.getElementById('dv-divider');
+    if (!divider) return;
+    var _drag = null;
+    divider.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      var rightPane = document.getElementById('hd-panel');
+      if (!rightPane) return;
+      _drag = { startX: e.clientX, startW: rightPane.offsetWidth };
+      divider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function(e){
+      if (!_drag) return;
+      var delta = _drag.startX - e.clientX;
+      var newW = Math.max(260, Math.min(650, _drag.startW + delta));
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
+    });
+    document.addEventListener('mouseup', function(){
+      if (!_drag) return;
+      _drag = null;
+      divider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+    divider.addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      var rightPane = document.getElementById('hd-panel');
+      if (!rightPane) return;
+      _drag = { startX: t.clientX, startW: rightPane.offsetWidth };
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if (!_drag) return;
+      var t = e.touches[0];
+      var delta = _drag.startX - t.clientX;
+      var newW = Math.max(260, Math.min(650, _drag.startW + delta));
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
+    }, {passive:true});
+    document.addEventListener('touchend', function(){ _drag = null; });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDividerDrag);
+  } else {
+    initDividerDrag();
+  }
+})();
 
 function dvMethodDesc(code) {
   var c = (code||'').toLowerCase().trim();
@@ -2854,6 +2992,8 @@ async function hdLoadDrugs() {
 
 function hdClosePanel() {
   document.getElementById('hd-panel').classList.remove('visible');
+  var div = document.getElementById('dv-divider');
+  if (div) div.classList.remove('visible');
   if (_hdActiveCodeEl) { _hdActiveCodeEl.classList.remove('active'); _hdActiveCodeEl = null; }
 }
 
@@ -2925,6 +3065,8 @@ function hdOpenByCode(code, name, codeEl) {
   var panel = document.getElementById('hd-panel');
   if (!panel.classList.contains('visible')) {
     panel.classList.add('visible');
+    var div = document.getElementById('dv-divider');
+    if (div) div.classList.add('visible');
     if (_hdAllDrugs.length === 0) {
       hdLoadDrugs().then(function(){ hdFindAndOpen(code, name); });
       return;
@@ -2978,7 +3120,9 @@ function hdShowDetail(d) {
   document.getElementById('hd-detail-code').textContent = '코드: ' + (d.code||'-') + ' · ' + cat.label;
 
   if (d.image_url) {
-    document.getElementById('hd-detail-img').src = d.image_url;
+    var img = document.getElementById('hd-detail-img');
+    img.src = d.image_url;
+    img.style.maxHeight = _hdImgSizes[_hdImgIdx].size + 'px';
     document.getElementById('hd-detail-img-wrap').style.display = 'block';
     document.getElementById('hd-detail-icon').style.display = 'none';
   } else {

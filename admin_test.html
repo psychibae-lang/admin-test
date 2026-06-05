@@ -1532,7 +1532,7 @@ function p2(n){return String(n).padStart(2,'0');}
 
 // 초기화 - DOM 로드 후 실행
 
-const ADMIN_PW='hanriver1000';
+const ADMIN_PW='han1234';
 
 function doLogin(){
   const pw=document.getElementById('pw-inp').value;
@@ -2482,6 +2482,8 @@ function applyTblAlign(){
           <button class="hd-size-btn" onclick="hdAdjustImg(-1)">−</button>
           <span class="hd-size-val" id="hd-img-val">보통</span>
           <button class="hd-size-btn" onclick="hdAdjustImg(1)">＋</button>
+          <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
+          <button onclick="hdSavePrefs()" style="padding:3px 10px;background:#1a1a1a;color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
         </div>
 
         <!-- 검색 -->
@@ -2601,6 +2603,7 @@ function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
 // ── 오른쪽 패널 글자 크기 조절 ──
 var _hdTextIdx = 1;
+window._hdTextIdx = 1;
 var _hdTextSizes = [
   {size:10, label:'작게'},
   {size:12, label:'보통'},
@@ -2610,6 +2613,7 @@ var _hdTextSizes = [
 ];
 function hdAdjustText(delta) {
   _hdTextIdx = Math.max(0, Math.min(_hdTextSizes.length - 1, _hdTextIdx + delta));
+  window._hdTextIdx = _hdTextIdx;
   var s = _hdTextSizes[_hdTextIdx];
   var panel = document.getElementById('hd-panel');
   if (panel) {
@@ -2622,9 +2626,11 @@ function hdAdjustText(delta) {
   var lbl = document.getElementById('hd-text-val');
   if (lbl) lbl.textContent = s.label;
 }
+window.hdAdjustText = hdAdjustText;
 
 // ── 오른쪽 패널 이미지 크기 조절 ──
 var _hdImgIdx = 1;
+window._hdImgIdx = 1;
 var _hdImgSizes = [
   {size:60,  label:'작게'},
   {size:100, label:'보통'},
@@ -2634,15 +2640,61 @@ var _hdImgSizes = [
 ];
 function hdAdjustImg(delta) {
   _hdImgIdx = Math.max(0, Math.min(_hdImgSizes.length - 1, _hdImgIdx + delta));
+  window._hdImgIdx = _hdImgIdx;
   var s = _hdImgSizes[_hdImgIdx];
   var img = document.getElementById('hd-detail-img');
   if (img) { img.style.maxHeight = s.size + 'px'; }
   var lbl = document.getElementById('hd-img-val');
   if (lbl) lbl.textContent = s.label;
 }
+window.hdAdjustImg = hdAdjustImg;
 
 // ── 가운데 구분선 드래그 리사이즈 ──
 (function(){
+  var HD_STORE = 'hdPanelPrefs_v1';
+  function loadPrefs(){ try{ return JSON.parse(localStorage.getItem(HD_STORE)||'{}'); }catch(e){return {};} }
+  function savePrefs(p){ try{ localStorage.setItem(HD_STORE, JSON.stringify(p)); }catch(e){} }
+
+  // 저장된 너비 즉시 적용 (패널 열릴 때도 적용)
+  window.hdApplySavedWidth = function(){
+    var p = loadPrefs();
+    var rightPane = document.getElementById('hd-panel');
+    if (rightPane && p.width) {
+      rightPane.style.width = p.width + 'px';
+      rightPane.style.minWidth = p.width + 'px';
+    }
+  };
+
+  // 저장 버튼 동작
+  window.hdSavePrefs = function(){
+    var rightPane = document.getElementById('hd-panel');
+    var w = rightPane ? rightPane.offsetWidth : null;
+    var p = loadPrefs();
+    if (w) p.width = w;
+    p.textIdx = window._hdTextIdx !== undefined ? window._hdTextIdx : 1;
+    p.imgIdx  = window._hdImgIdx  !== undefined ? window._hdImgIdx  : 1;
+    savePrefs(p);
+    if (typeof showToast === 'function') showToast('✅ 패널 설정 저장 완료!');
+    else if (typeof toast === 'function') toast('✅ 패널 설정 저장 완료!');
+  };
+
+  // 저장된 인덱스 복원 (DOMContentLoaded 후)
+  function restorePrefs(){
+    var p = loadPrefs();
+    if (p.width) {
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = p.width + 'px'; rightPane.style.minWidth = p.width + 'px'; }
+    }
+    if (p.textIdx !== undefined && typeof window.hdAdjustText === 'function') {
+      var diff = p.textIdx - (window._hdTextIdx || 1);
+      if (diff !== 0) window.hdAdjustText(diff);
+    }
+    if (p.imgIdx !== undefined && typeof window.hdAdjustImg === 'function') {
+      var diff2 = p.imgIdx - (window._hdImgIdx || 1);
+      if (diff2 !== 0) window.hdAdjustImg(diff2);
+    }
+  }
+
   function initDividerDrag(){
     var divider = document.getElementById('dv-divider');
     if (!divider) return;
@@ -2658,8 +2710,10 @@ function hdAdjustImg(delta) {
     });
     document.addEventListener('mousemove', function(e){
       if (!_drag) return;
-      var delta = _drag.startX - e.clientX;
-      var newW = Math.max(260, Math.min(650, _drag.startW + delta));
+      // 오른쪽으로 드래그 → delta 양수 → 패널 좁아짐 (왼쪽 영역 확장)
+      // 왼쪽으로 드래그 → delta 음수 → 패널 넓어짐
+      var delta = e.clientX - _drag.startX;
+      var newW = Math.max(220, Math.min(720, _drag.startW - delta));
       var rightPane = document.getElementById('hd-panel');
       if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
     });
@@ -2679,12 +2733,14 @@ function hdAdjustImg(delta) {
     document.addEventListener('touchmove', function(e){
       if (!_drag) return;
       var t = e.touches[0];
-      var delta = _drag.startX - t.clientX;
-      var newW = Math.max(260, Math.min(650, _drag.startW + delta));
+      var delta = t.clientX - _drag.startX;
+      var newW = Math.max(220, Math.min(720, _drag.startW - delta));
       var rightPane = document.getElementById('hd-panel');
       if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
     }, {passive:true});
     document.addEventListener('touchend', function(){ _drag = null; });
+
+    restorePrefs();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDividerDrag);

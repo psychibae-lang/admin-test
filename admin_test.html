@@ -2603,7 +2603,6 @@ function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
 // ── 오른쪽 패널 글자 크기 조절 ──
 var _hdTextIdx = 1;
-window._hdTextIdx = 1;
 var _hdTextSizes = [
   {size:10, label:'작게'},
   {size:12, label:'보통'},
@@ -2613,7 +2612,6 @@ var _hdTextSizes = [
 ];
 function hdAdjustText(delta) {
   _hdTextIdx = Math.max(0, Math.min(_hdTextSizes.length - 1, _hdTextIdx + delta));
-  window._hdTextIdx = _hdTextIdx;
   var s = _hdTextSizes[_hdTextIdx];
   var panel = document.getElementById('hd-panel');
   if (panel) {
@@ -2626,11 +2624,9 @@ function hdAdjustText(delta) {
   var lbl = document.getElementById('hd-text-val');
   if (lbl) lbl.textContent = s.label;
 }
-window.hdAdjustText = hdAdjustText;
 
 // ── 오른쪽 패널 이미지 크기 조절 ──
 var _hdImgIdx = 1;
-window._hdImgIdx = 1;
 var _hdImgSizes = [
   {size:60,  label:'작게'},
   {size:100, label:'보통'},
@@ -2640,14 +2636,12 @@ var _hdImgSizes = [
 ];
 function hdAdjustImg(delta) {
   _hdImgIdx = Math.max(0, Math.min(_hdImgSizes.length - 1, _hdImgIdx + delta));
-  window._hdImgIdx = _hdImgIdx;
   var s = _hdImgSizes[_hdImgIdx];
   var img = document.getElementById('hd-detail-img');
   if (img) { img.style.maxHeight = s.size + 'px'; }
   var lbl = document.getElementById('hd-img-val');
   if (lbl) lbl.textContent = s.label;
 }
-window.hdAdjustImg = hdAdjustImg;
 
 // ── 가운데 구분선 드래그 리사이즈 ──
 (function(){
@@ -2655,43 +2649,32 @@ window.hdAdjustImg = hdAdjustImg;
   function loadPrefs(){ try{ return JSON.parse(localStorage.getItem(HD_STORE)||'{}'); }catch(e){return {};} }
   function savePrefs(p){ try{ localStorage.setItem(HD_STORE, JSON.stringify(p)); }catch(e){} }
 
-  // 저장된 너비 즉시 적용 (패널 열릴 때도 적용)
-  window.hdApplySavedWidth = function(){
-    var p = loadPrefs();
-    var rightPane = document.getElementById('hd-panel');
-    if (rightPane && p.width) {
-      rightPane.style.width = p.width + 'px';
-      rightPane.style.minWidth = p.width + 'px';
-    }
-  };
-
-  // 저장 버튼 동작
+  // 저장 버튼 동작 (전역)
   window.hdSavePrefs = function(){
     var rightPane = document.getElementById('hd-panel');
     var w = rightPane ? rightPane.offsetWidth : null;
     var p = loadPrefs();
     if (w) p.width = w;
-    p.textIdx = window._hdTextIdx !== undefined ? window._hdTextIdx : 1;
-    p.imgIdx  = window._hdImgIdx  !== undefined ? window._hdImgIdx  : 1;
+    p.textIdx = typeof _hdTextIdx !== 'undefined' ? _hdTextIdx : 1;
+    p.imgIdx  = typeof _hdImgIdx  !== 'undefined' ? _hdImgIdx  : 1;
     savePrefs(p);
     if (typeof showToast === 'function') showToast('✅ 패널 설정 저장 완료!');
     else if (typeof toast === 'function') toast('✅ 패널 설정 저장 완료!');
   };
 
-  // 저장된 인덱스 복원 (DOMContentLoaded 후)
   function restorePrefs(){
     var p = loadPrefs();
     if (p.width) {
       var rightPane = document.getElementById('hd-panel');
       if (rightPane) { rightPane.style.width = p.width + 'px'; rightPane.style.minWidth = p.width + 'px'; }
     }
-    if (p.textIdx !== undefined && typeof window.hdAdjustText === 'function') {
-      var diff = p.textIdx - (window._hdTextIdx || 1);
-      if (diff !== 0) window.hdAdjustText(diff);
+    if (p.textIdx !== undefined) {
+      var diff = p.textIdx - (typeof _hdTextIdx !== 'undefined' ? _hdTextIdx : 1);
+      if (diff !== 0 && typeof hdAdjustText === 'function') hdAdjustText(diff);
     }
-    if (p.imgIdx !== undefined && typeof window.hdAdjustImg === 'function') {
-      var diff2 = p.imgIdx - (window._hdImgIdx || 1);
-      if (diff2 !== 0) window.hdAdjustImg(diff2);
+    if (p.imgIdx !== undefined) {
+      var diff2 = p.imgIdx - (typeof _hdImgIdx !== 'undefined' ? _hdImgIdx : 1);
+      if (diff2 !== 0 && typeof hdAdjustImg === 'function') hdAdjustImg(diff2);
     }
   }
 
@@ -2710,8 +2693,7 @@ window.hdAdjustImg = hdAdjustImg;
     });
     document.addEventListener('mousemove', function(e){
       if (!_drag) return;
-      // 오른쪽으로 드래그 → delta 양수 → 패널 좁아짐 (왼쪽 영역 확장)
-      // 왼쪽으로 드래그 → delta 음수 → 패널 넓어짐
+      // 오른쪽으로 드래그 → 오른쪽 패널 좁아짐 / 왼쪽으로 드래그 → 넓어짐
       var delta = e.clientX - _drag.startX;
       var newW = Math.max(220, Math.min(720, _drag.startW - delta));
       var rightPane = document.getElementById('hd-panel');
@@ -3166,6 +3148,23 @@ function hdOpenDetail(idx) {
   hdShowDetail(d);
 }
 
+// ★ 현재 저장된 글자/이미지 크기를 패널 전체에 즉시 적용
+function hdApplyCurrentSizes() {
+  var ts = _hdTextSizes[_hdTextIdx];
+  var panel = document.getElementById('hd-panel');
+  if (panel && ts) {
+    panel.querySelectorAll('.hd-info-text, .hd-drug-name, .hd-tab-pane p, .hd-tab-pane li').forEach(function(el){
+      el.style.fontSize = ts.size + 'px';
+    });
+    panel.querySelectorAll('.hd-detail-name').forEach(function(el){
+      el.style.fontSize = (ts.size + 2) + 'px';
+    });
+  }
+  var is = _hdImgSizes[_hdImgIdx];
+  var img = document.getElementById('hd-detail-img');
+  if (img && is) img.style.maxHeight = is.size + 'px';
+}
+
 function hdShowDetail(d) {
   document.getElementById('hd-list-area').style.display = 'none';
   document.getElementById('hd-detail-area').style.display = 'block';
@@ -3192,6 +3191,8 @@ function hdShowDetail(d) {
   } else {
     hdLoadAiInfo(d);
   }
+  // ★ 상세 표시 후 저장된 크기 재적용 (innerHTML 교체 전 요소에도 적용)
+  hdApplyCurrentSizes();
 }
 
 function hdBackToList() {
@@ -3207,6 +3208,8 @@ function hdSwitchTab(tab) {
     var el = document.getElementById('hd-tab-'+t);
     if (el) el.classList.toggle('active', t===tab);
   });
+  // ★ 탭 전환 후에도 크기 유지
+  if (typeof hdApplyCurrentSizes === 'function') hdApplyCurrentSizes();
 }
 
 function hdParseBadges(text) {
@@ -3255,6 +3258,9 @@ function hdRenderDrugInfo(d) {
     ].join('') :
     '<div style="text-align:center;padding:24px 0;color:#adb5bd;"><div style="font-size:28px;margin-bottom:8px;">🔗</div><div style="font-size:12px;">등록된 외부 링크가 없습니다.</div></div>') +
     '</div>';
+
+  // ★ 렌더 후 저장된 글자 크기 즉시 재적용
+  hdApplyCurrentSizes();
 }
 
 var HD_SUPA_URL = 'https://rurbfcocihvapbtdzbyt.supabase.co';
@@ -3283,6 +3289,7 @@ async function hdLoadAiInfo(d) {
     var info = {}; try { info = JSON.parse(clean); } catch(e) { info = {effect:text}; }
     var merged = Object.assign({}, d, info);
     hdRenderDrugInfo(merged);
+    hdApplyCurrentSizes();
   } catch(e) {
     var err = '<div class="hd-empty-state"><div class="hd-empty-icon">⚠️</div><div class="hd-empty-text">AI 정보를 불러올 수 없습니다.</div></div>';
     ['effect','side','mech','interact','caution'].forEach(function(t){

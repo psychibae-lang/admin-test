@@ -66,15 +66,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* 테이블 */
 .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
-.filter-bar input,.filter-bar select{padding:9px 14px;border:1px solid #ddd;border-radius:7px;font-size:21px;outline:none}
+.filter-bar input,.filter-bar select{padding:9px 14px;border:1px solid #ddd;border-radius:7px;font-size:14px;outline:none}
 .tbl-wrap{overflow-x:auto}
 .del-bar{display:none;align-items:center;gap:10px;padding:8px 12px;background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin-bottom:10px}
 .del-bar.show{display:flex}
 .del-count{font-size:13px;color:#dc2626;font-weight:500}
 .chk{width:15px;height:15px;cursor:pointer;accent-color:#dc2626}
 
-table{width:100%;border-collapse:collapse;font-size:23px;min-width:1050px}
-th{text-align:left;padding:13px 14px;font-weight:700;font-size:21px;color:#888;border-bottom:1px solid #ebebeb;white-space:nowrap;background:#fafaf9;cursor:pointer;user-select:none}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:1050px}
+th{text-align:left;padding:13px 14px;font-weight:700;font-size:13px;color:#888;border-bottom:1px solid #ebebeb;white-space:nowrap;background:#fafaf9;cursor:pointer;user-select:none}
 th:hover{color:#1a1a1a}
 td{padding:11px 13px;border-bottom:1px solid #f5f5f3;vertical-align:middle;font-size:22px;font-weight:600}
 tr:hover td{background:#fafaf9}
@@ -171,6 +171,20 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
 .col-graph{width:100px}
 .col-time{width:110px}
 .col-name{width:90px}
+
+/* COMMENT 셀 넘침 방지 */
+td.col-comment-cell, #tbl-wrap td:nth-child(8){
+  max-width:180px;
+  overflow:hidden;
+}
+#tbl-wrap td:nth-child(8) > div:first-child {
+  overflow:hidden;
+  white-space:normal;
+  word-break:break-all;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+}
 
 </style>
 </head>
@@ -1009,6 +1023,8 @@ function renderTable(){
   const rz='<div class="resizer"></div>';
   wrap.innerHTML=`<table><thead><tr>
     <th class="col-chk"><input type="checkbox" class="chk" id="chk-all" onclick="toggleAll(this)"></th>
+    <th class="col-time ${sortCol==='time'?'sort-'+sortDir:''}" onclick="doSort('time')" draggable="true">TIME${rz}</th>
+    <th class="col-name ${sortCol==='name'?'sort-'+sortDir:''}" onclick="doSort('name')" draggable="true">이름${rz}</th>
     <th class="col-scale ${sortCol==='scale'?'sort-'+sortDir:''}" onclick="doSort('scale')" draggable="true">검사명${rz}</th>
     <th class="col-result" draggable="true">검사결과${rz}</th>
     <th class="col-interp" draggable="true">검사해석${rz}</th>
@@ -1016,8 +1032,6 @@ function renderTable(){
     <th class="col-comment" draggable="true">COMMENT${rz}</th>
     <th class="col-save" draggable="true">저장${rz}</th>
     <th class="col-graph" draggable="true">그래프${rz}</th>
-    <th class="col-time ${sortCol==='time'?'sort-'+sortDir:''}" onclick="doSort('time')" draggable="true">TIME${rz}</th>
-    <th class="col-name ${sortCol==='name'?'sort-'+sortDir:''}" onclick="doSort('name')" draggable="true">이름${rz}</th>
   </tr></thead><tbody>${rows.map(({sess,res})=>renderRow(sess,res)).join('')}</tbody></table>`;
   setTimeout(()=>{initColDrag();initResizers();applyTblAlign();restoreColWidths();},100);
 }
@@ -1038,9 +1052,9 @@ function renderRow(sess,res){
   const rowKey=sess.id+(res?.scale_id||'');
   return`<tr>
     <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' onchange='updateDelBar()'></td>
-    <td style="font-size:17px;white-space:nowrap;color:#888">
+    <td style="font-size:12px;white-space:nowrap;color:#888">
       ${ts}<br>
-      <button class="btn sm" style="margin-top:3px;font-size:16px;color:#2563eb;border-color:#bfdbfe" 
+      <button class="btn sm" style="margin-top:3px;font-size:12px;color:#2563eb;border-color:#bfdbfe" 
         onclick="copySessionAll('${sess.id}')">전체복사</button>
     </td>
     <td style="font-weight:700;white-space:nowrap">
@@ -1051,24 +1065,17 @@ function renderRow(sess,res){
         title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
     </td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
-    <td style="font-weight:700;font-size:19px;white-space:nowrap">${res?extra.display||res.score:''}</td>
+    <td style="font-weight:700;font-size:14px;white-space:nowrap">${res?extra.display||res.score:''}</td>
     <td style="white-space:nowrap">${res?`<span class="sev ${getSevCls(res.interp||'')}">${res.interp||''}</span>`:''}</td>
-    <td style="max-width:160px">${copy?`<div style="font-size:16px;color:#666;max-width:150px;overflow:hidden;white-space:normal;word-break:break-all;margin-bottom:3px">${copy}</div><button class="btn sm" onclick="copyText('${copyEsc}')">복사</button>`:''}</td>
-    <td style="max-width:160px">
-      <div style="font-size:15px;color:#555;line-height:1.5;margin-bottom:3px">${dbComment||scComment.slice(0,50)+(scComment.length>50?'…':'')}</div>
+    <td style="max-width:160px">${copy?`<div style="font-size:13px;color:#666;max-width:150px;overflow:hidden;white-space:normal;word-break:break-all;margin-bottom:3px">${copy}</div><button class="btn sm" onclick="copyText('${copyEsc}')">복사</button>`:''}</td>
+    <td style="max-width:160px;overflow:hidden">
+      <div style="font-size:12px;color:#555;line-height:1.5;margin-bottom:3px;overflow:hidden;white-space:normal;word-break:break-all;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical">${dbComment||scComment.slice(0,60)+(scComment.length>60?'…':'')}</div>
       <button class="btn sm" onclick="editComment('${resId}','${dbCommentEsc}')">편집</button>
     </td>
     <td>${res?`<button class="btn sm blue" onclick="saveSessionPDF('${sess.id}')">PDF</button>`:''}</td>
     <td>
       ${gUrl?`<button class="btn sm" onclick="openGraph('${gUrl}')">그래프1</button>`:''}
       ${(res&&(res.scale_id==='ocir'||res.scale_id==='moci'))?`<button class="btn sm" style="margin-top:3px" onclick="openGraph2('${sess.id}','${res.scale_id||''}')">그래프2</button>`:''}
-    </td>
-    <td style="font-size:17px;white-space:nowrap;color:#888">
-      ${ts}<br>
-      <button class="btn sm" style="margin-top:3px;font-size:16px;color:#2563eb;border-color:#bfdbfe" onclick="copySessionAll('${sess.id}')">전체복사</button>
-    </td>
-    <td style="font-weight:700;white-space:nowrap">
-      <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)" style="cursor:pointer" title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
     </td>
   </tr>`;
 }
@@ -1532,7 +1539,7 @@ function p2(n){return String(n).padStart(2,'0');}
 
 // 초기화 - DOM 로드 후 실행
 
-const ADMIN_PW='hanriver1000';
+const ADMIN_PW='han1234';
 
 function doLogin(){
   const pw=document.getElementById('pw-inp').value;
@@ -2207,107 +2214,335 @@ function applyTblAlign(){
 })();
 </script>
 <!-- ══ 약물조회 탭 ══ -->
+<style>
+.dv-split-wrap { display:flex; gap:0; align-items:flex-start; width:100%; }
+.dv-left-pane  { flex:1; min-width:0; overflow:hidden; }
+.dv-divider {
+  width:6px; flex-shrink:0; cursor:col-resize;
+  background:transparent; position:relative;
+  align-self:stretch; margin:0 4px;
+  border-radius:3px; transition:background 0.15s;
+  display:none;
+}
+.dv-divider::after {
+  content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:2px; height:40px; background:#c8d5ea; border-radius:2px;
+}
+.dv-divider:hover, .dv-divider.dragging { background:rgba(59,110,248,0.20); }
+.dv-divider:hover::after, .dv-divider.dragging::after { background:#3b6ef8; }
+.dv-divider.visible { display:block; }
+.dv-right-pane {
+  width:380px; min-width:260px; max-width:600px;
+  flex-shrink:0;
+  border-left:none;
+  padding-left:10px;
+  margin-left:0;
+  position:sticky;
+  top:60px;
+  max-height:calc(100vh - 80px);
+  overflow-y:auto;
+  display:none;
+}
+.dv-right-pane.visible { display:block; }
+/* 오른쪽 패널 크기 조절 바 */
+.hd-size-bar {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 10px; background:#f4f6fb; border:1px solid #e4e8f0;
+  border-radius:8px; margin-bottom:10px; flex-wrap:wrap;
+}
+.hd-size-bar-lbl { font-size:10px; color:#888; font-weight:600; white-space:nowrap; }
+.hd-size-btn {
+  width:22px; height:22px; border:1px solid #ddd; border-radius:4px;
+  background:#fff; cursor:pointer; font-size:13px; line-height:1; font-weight:700;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.hd-size-btn:hover { background:#eff6ff; border-color:#bfdbfe; }
+.hd-size-val { font-size:10px; font-weight:700; color:#3b6ef8; min-width:24px; text-align:center; }
+
+/* Han_drugs 패널 내부 스타일 */
+.hd-panel { font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif; }
+.hd-panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.hd-panel-title { font-size:13px; font-weight:700; color:#1a1a1a; }
+.hd-panel-close {
+  background:none; border:none; cursor:pointer; color:#aaa; font-size:16px;
+  padding:2px 6px; border-radius:5px;
+}
+.hd-panel-close:hover { background:#f3f4f6; color:#666; }
+
+/* 검색 */
+.hd-search-wrap {
+  display:flex; align-items:center; gap:8px;
+  background:#f4f6fb; border:1.5px solid #e4e8f0;
+  border-radius:10px; padding:9px 12px; margin-bottom:12px;
+  transition:border-color 0.2s;
+}
+.hd-search-wrap:focus-within { border-color:#3b6ef8; background:#fff; }
+.hd-search-wrap input {
+  flex:1; background:none; border:none; outline:none;
+  font-size:13px; color:#1a1d2e; font-family:inherit;
+}
+.hd-search-wrap input::placeholder { color:#adb5bd; }
+
+/* 약물 리스트 */
+.hd-drug-item {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 12px; background:#fff;
+  border:1px solid #e4e8f0; border-radius:10px;
+  margin-bottom:6px; cursor:pointer; transition:all 0.15s;
+}
+.hd-drug-item:hover { border-color:#3b6ef8; background:#eef2ff; }
+.hd-drug-item.active { border-color:#3b6ef8; background:#eef2ff; }
+.hd-drug-icon {
+  width:52px; height:36px; border-radius:7px;
+  background:#f3f4f6; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0; margin-top:2px;
+}
+.hd-drug-icon img { width:100%; height:100%; object-fit:contain; }
+.hd-drug-info { flex:1; min-width:0; }
+.hd-drug-name { font-size:13px; font-weight:500; color:#1a1d2e; word-break:keep-all; overflow-wrap:break-word; white-space:normal; line-height:1.4; margin-bottom:2px; }
+.hd-drug-code { font-size:10px; color:#adb5bd; font-family:monospace; margin-bottom:4px; }
+.hd-cat-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; white-space:nowrap; display:inline-block; }
+
+/* 상세 패널 */
+.hd-detail-hero {
+  padding:14px; background:linear-gradient(135deg,#f8f9ff 0%,#eef2ff 100%);
+  border-radius:10px; margin-bottom:10px;
+  border:1px solid #e4e8f0;
+}
+.hd-detail-name { font-size:16px; font-weight:700; color:#1a1d2e; margin-bottom:3px; }
+.hd-detail-code { font-size:11px; color:#6b7280; font-family:monospace; margin-bottom:8px; }
+.hd-ai-tag { display:inline-flex; align-items:center; gap:3px; font-size:10px; background:#d1fae5; color:#065f46; padding:2px 8px; border-radius:20px; font-weight:600; }
+
+.hd-tab-nav {
+  display:flex; gap:2px; border-bottom:1px solid #e4e8f0;
+  margin-bottom:10px; overflow-x:auto; scrollbar-width:none;
+}
+.hd-tab-nav::-webkit-scrollbar { display:none; }
+.hd-tab-btn {
+  padding:8px 10px; font-size:11px; font-weight:500; color:#6b7280;
+  border:none; background:none; cursor:pointer; white-space:nowrap;
+  border-bottom:2px solid transparent; font-family:inherit; transition:all 0.15s;
+}
+.hd-tab-btn.active { color:#3b6ef8; border-bottom-color:#3b6ef8; }
+
+.hd-tab-pane { display:none; }
+.hd-tab-pane.active { display:block; }
+
+.hd-info-card { background:#f4f6fb; border-radius:8px; padding:12px; margin-bottom:8px; }
+.hd-info-label { font-size:10px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px; }
+.hd-info-text { font-size:12px; color:#1a1d2e; line-height:1.7; }
+.hd-badge-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
+.hd-badge { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; }
+.hd-badge-danger { background:#fef2f2; color:#b91c1c; }
+.hd-badge-warn { background:#fffbeb; color:#92400e; }
+.hd-badge-info { background:#eff6ff; color:#1d4ed8; }
+
+.hd-ai-loading { text-align:center; padding:30px 20px; }
+.hd-ai-spinner { width:28px; height:28px; border:2px solid #e4e8f0; border-top-color:#3b6ef8; border-radius:50%; animation:hdSpin 0.8s linear infinite; margin:0 auto 10px; }
+@keyframes hdSpin { to { transform:rotate(360deg); } }
+.hd-ai-loading-text { font-size:12px; color:#6b7280; }
+
+.hd-empty-state { text-align:center; padding:40px 20px; color:#adb5bd; }
+.hd-empty-icon { font-size:36px; margin-bottom:10px; opacity:0.4; }
+.hd-empty-text { font-size:12px; line-height:1.6; }
+
+/* 약물코드 클릭 가능 표시 */
+.dv-code-link {
+  font-family:monospace; font-size:11px; background:#eff6ff;
+  color:#2563eb; padding:2px 7px; border-radius:4px;
+  border:1px solid #bfdbfe; cursor:pointer; transition:all 0.15s;
+  display:inline-block;
+}
+.dv-code-link:hover { background:#2563eb; color:#fff; }
+.dv-code-link.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+</style>
+
 <div class="screen content" id="tab-drugview">
-  <div style="width:100%;">
-    <!-- 검색 -->
-    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px;">차트번호</div>
-        <input id="dv-chartno" type="text" placeholder="예: 26"
-          style="padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;outline:none;width:160px;"
-          onkeydown="if(event.key==='Enter')dvLoad()">
-      </div>
-      <button class="btn pri" onclick="dvLoad()" style="height:38px;padding:0 18px;">🔍 조회</button>
-      <!-- 실시간 상태 배지 -->
-      <div id="dv-rt-badge" style="display:none;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#f0fdf4;border:1.5px solid #bbf7d0;color:#16a34a;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;animation:rtPulse 1.5s ease-in-out infinite;flex-shrink:0;"></span>
-        <span id="dv-rt-text">실시간 감시 중</span>
-      </div>
-      <div id="dv-rt-flash" style="display:none;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;">
-        🔄 약물정보 업데이트됨
-      </div>
-    </div>
-    <style>
-    @keyframes rtPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.45;transform:scale(1.35);}}
-    </style>
-    <div id="dv-status" style="display:none;padding:9px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;"></div>
+  <div class="dv-split-wrap">
 
-    <!-- 결과 카드 -->
-    <div id="dv-result" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:16px;font-weight:800;color:#1a1a1a;">차트 <span id="dv-chart-label" style="color:#2563eb;font-family:monospace;"></span></span>
-          <span id="dv-date-badge" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:20px;padding:4px 12px;font-size:12px;color:#1d4ed8;font-weight:600;">📅 <span id="dv-date-label"></span></span>
+    <!-- ─── 왼쪽: 기존 약물조회 영역 ─── -->
+    <div class="dv-left-pane">
+      <!-- 검색 -->
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px;">차트번호</div>
+          <input id="dv-chartno" type="text" placeholder="예: 26"
+            style="padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;outline:none;width:160px;"
+            onkeydown="if(event.key==='Enter')dvLoad()">
         </div>
-        <button onclick="dvSaveImage()" class="btn" style="border-color:#7c3aed;color:#7c3aed;font-size:12px;">🖼️ 이미지 저장</button>
+        <button class="btn pri" onclick="dvLoad()" style="height:38px;padding:0 18px;">🔍 조회</button>
+        <!-- 실시간 상태 배지 -->
+        <div id="dv-rt-badge" style="display:none;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#f0fdf4;border:1.5px solid #bbf7d0;color:#16a34a;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;animation:rtPulse 1.5s ease-in-out infinite;flex-shrink:0;"></span>
+          <span id="dv-rt-text">실시간 감시 중</span>
+        </div>
+        <div id="dv-rt-flash" style="display:none;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;">
+          🔄 약물정보 업데이트됨
+        </div>
       </div>
+      <style>
+      @keyframes rtPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.45;transform:scale(1.35);}}
+      </style>
+      <div id="dv-status" style="display:none;padding:9px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;"></div>
 
-      <!-- 화면 크기 / 글자·이미지 독립 조절 -->
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8faff;border:1px solid #e0e9ff;border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <span style="font-size:11px;color:#666;font-weight:600;white-space:nowrap;">🔍 화면 크기</span>
-        <input type="range" id="dv-zoom-slider" min="70" max="160" value="100" step="5"
-          style="flex:1;min-width:90px;max-width:180px;accent-color:#2563eb;cursor:pointer;"
-          oninput="dvApplyZoom(this.value)">
-        <span id="dv-zoom-label" style="font-size:12px;font-weight:700;color:#2563eb;min-width:36px;">100%</span>
-        <button onclick="dvApplyZoom(100);document.getElementById('dv-zoom-slider').value=100;"
-          style="font-size:11px;padding:3px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;">초기화</button>
-        <!-- 글자 크기 -->
-        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🔤 글자</span>
-        <button onclick="dvAdjustText(-1)"
-          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
-        <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
-        <button onclick="dvAdjustText(1)"
-          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
-        <!-- 이미지 크기 -->
-        <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🖼 이미지</span>
-        <button onclick="dvAdjustImg(-1)"
-          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
-        <span id="dv-img-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
-        <button onclick="dvAdjustImg(1)"
-          style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
-      </div>
-
-      <!-- 인쇄/캡처 영역 -->
-      <div id="dv-print-area" style="background:#fff;border:1px solid #ebebeb;border-radius:10px;padding:18px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
-          <div>
-            <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">한강의원 복용약물</div>
-            <div style="font-size:20px;font-weight:900;color:#1a1a1a;">차트 <span id="dv-print-chart" style="color:#2563eb;font-family:monospace;"></span></div>
+      <!-- 결과 카드 -->
+      <div id="dv-result" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:16px;font-weight:800;color:#1a1a1a;">차트 <span id="dv-chart-label" style="color:#2563eb;font-family:monospace;"></span></span>
+            <span id="dv-date-badge" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:20px;padding:4px 12px;font-size:12px;color:#1d4ed8;font-weight:600;">📅 <span id="dv-date-label"></span></span>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:10px;color:#888;margin-bottom:3px;">저장날짜</div>
-            <div id="dv-print-date" style="font-size:15px;font-weight:800;color:#2563eb;"></div>
+          <button onclick="dvSaveImage()" class="btn" style="border-color:#7c3aed;color:#7c3aed;font-size:12px;">🖼️ 이미지 저장</button>
+        </div>
+
+        <!-- 화면 크기 / 글자·이미지 독립 조절 -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8faff;border:1px solid #e0e9ff;border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:#666;font-weight:600;white-space:nowrap;">🔍 화면 크기</span>
+          <input type="range" id="dv-zoom-slider" min="70" max="160" value="100" step="5"
+            style="flex:1;min-width:90px;max-width:180px;accent-color:#2563eb;cursor:pointer;"
+            oninput="dvApplyZoom(this.value)">
+          <span id="dv-zoom-label" style="font-size:12px;font-weight:700;color:#2563eb;min-width:36px;">100%</span>
+          <button onclick="dvApplyZoom(100);document.getElementById('dv-zoom-slider').value=100;"
+            style="font-size:11px;padding:3px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;">초기화</button>
+          <!-- 글자 크기 -->
+          <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🔤 글자</span>
+          <button onclick="dvAdjustText(-1)"
+            style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
+          <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+          <button onclick="dvAdjustText(1)"
+            style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
+          <!-- 이미지 크기 -->
+          <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🖼 이미지</span>
+          <button onclick="dvAdjustImg(-1)"
+            style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
+          <span id="dv-img-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+          <button onclick="dvAdjustImg(1)"
+            style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
+        </div>
+
+        <!-- 인쇄/캡처 영역 -->
+        <div id="dv-print-area" style="background:#fff;border:1px solid #ebebeb;border-radius:10px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
+            <div>
+              <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">한강의원 복용약물</div>
+              <div style="font-size:20px;font-weight:900;color:#1a1a1a;">차트 <span id="dv-print-chart" style="color:#2563eb;font-family:monospace;"></span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:#888;margin-bottom:3px;">저장날짜</div>
+              <div id="dv-print-date" style="font-size:15px;font-weight:800;color:#2563eb;"></div>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table id="dv-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px;">
+              <colgroup>
+                <col style="width:90px;">  <!-- 약물코드 -->
+                <col style="width:160px;"> <!-- 약물명 -->
+                <col style="width:130px;"> <!-- 이미지 60% 확대 -->
+                <col style="width:80px;">  <!-- 하루총용량 -->
+                <col style="width:50px;">  <!-- 일투 -->
+                <col style="width:50px;">  <!-- 일수 -->
+                <col style="width:50px;">  <!-- 용법 -->
+                <col>                      <!-- 용법설명 -->
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물코드</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물명</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">이미지</th>
+                  <th style="background:#fefce8;color:#b45309;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #fde68a;">하루총용량</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일투</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일수</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">용법</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">용법설명</th>
+                </tr>
+              </thead>
+              <tbody id="dv-tbody"></tbody>
+            </table>
           </div>
         </div>
-        <div style="overflow-x:auto;">
-          <table id="dv-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px;">
-            <colgroup>
-              <col style="width:90px;">  <!-- 약물코드 -->
-              <col style="width:160px;"> <!-- 약물명 -->
-              <col style="width:130px;"> <!-- 이미지 60% 확대 -->
-              <col style="width:80px;">  <!-- 하루총용량 -->
-              <col style="width:50px;">  <!-- 일투 -->
-              <col style="width:50px;">  <!-- 일수 -->
-              <col style="width:50px;">  <!-- 용법 -->
-              <col>                      <!-- 용법설명 -->
-            </colgroup>
-            <thead>
-              <tr>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물코드</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물명</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">이미지</th>
-                <th style="background:#fefce8;color:#b45309;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #fde68a;">하루총용량</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일투</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일수</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">용법</th>
-                <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">용법설명</th>
-              </tr>
-            </thead>
-            <tbody id="dv-tbody"></tbody>
-          </table>
+      </div>
+    </div><!-- /dv-left-pane -->
+
+    <!-- ─── 가운데 드래그 구분선 ─── -->
+    <div class="dv-divider" id="dv-divider"></div>
+
+    <!-- ─── 오른쪽: 약물 상세정보 패널 (Han_drugs) ─── -->
+    <div class="dv-right-pane" id="hd-panel">
+      <div class="hd-panel">
+        <div class="hd-panel-header">
+          <span class="hd-panel-title">💊 약물 상세정보</span>
+          <button class="hd-panel-close" onclick="hdClosePanel()" title="닫기">✕</button>
+        </div>
+
+        <!-- 오른쪽 패널 글자/이미지 크기 조절 -->
+        <div class="hd-size-bar" id="hd-size-bar">
+          <span class="hd-size-bar-lbl">🔤 글자</span>
+          <button class="hd-size-btn" onclick="hdAdjustText(-1)">−</button>
+          <span class="hd-size-val" id="hd-text-val">보통</span>
+          <button class="hd-size-btn" onclick="hdAdjustText(1)">＋</button>
+          <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
+          <span class="hd-size-bar-lbl">🖼 이미지</span>
+          <button class="hd-size-btn" onclick="hdAdjustImg(-1)">−</button>
+          <span class="hd-size-val" id="hd-img-val">보통</span>
+          <button class="hd-size-btn" onclick="hdAdjustImg(1)">＋</button>
+          <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
+          <button onclick="hdSavePrefs()" style="padding:3px 10px;background:#1a1a1a;color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
+        </div>
+
+        <!-- 검색 -->
+        <div class="hd-search-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="hd-search" placeholder="약물명 검색..." oninput="hdOnSearch()" />
+        </div>
+
+        <!-- 목록 / 상세 전환 영역 -->
+        <div id="hd-list-area">
+          <div id="hd-list-label" style="font-size:10px;font-weight:700;color:#adb5bd;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">전체 약물</div>
+          <div id="hd-drug-list">
+            <div class="hd-empty-state">
+              <div class="hd-ai-spinner" style="margin:0 auto 10px;"></div>
+              <div class="hd-empty-text">약물 목록 불러오는 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 상세 영역 -->
+        <div id="hd-detail-area" style="display:none;">
+          <button onclick="hdBackToList()" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#6b7280;font-size:12px;margin-bottom:10px;font-family:inherit;padding:0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
+            목록으로
+          </button>
+          <div class="hd-detail-hero">
+            <div id="hd-detail-img-wrap" style="display:none;margin-bottom:10px;">
+              <img id="hd-detail-img" src="" alt="" style="width:100%;max-height:100px;object-fit:contain;border-radius:8px;border:1px solid #e4e8f0;background:#fafafa;padding:6px;">
+            </div>
+            <div id="hd-detail-icon" style="font-size:26px;margin-bottom:8px;">💊</div>
+            <div class="hd-detail-name" id="hd-detail-name"></div>
+            <div class="hd-detail-code" id="hd-detail-code"></div>
+            <span class="hd-ai-tag">✨ AI 정보 보완</span>
+          </div>
+          <div class="hd-tab-nav" id="hd-tab-nav">
+            <button class="hd-tab-btn active" onclick="hdSwitchTab('effect')">효능</button>
+            <button class="hd-tab-btn" onclick="hdSwitchTab('side')">부작용</button>
+            <button class="hd-tab-btn" onclick="hdSwitchTab('mech')">기전</button>
+            <button class="hd-tab-btn" onclick="hdSwitchTab('interact')">상호작용</button>
+            <button class="hd-tab-btn" onclick="hdSwitchTab('caution')">주의</button>
+            <button class="hd-tab-btn" onclick="hdSwitchTab('links')">🔗 링크</button>
+          </div>
+          <div id="hd-tab-effect" class="hd-tab-pane active"></div>
+          <div id="hd-tab-side" class="hd-tab-pane"></div>
+          <div id="hd-tab-mech" class="hd-tab-pane"></div>
+          <div id="hd-tab-interact" class="hd-tab-pane"></div>
+          <div id="hd-tab-caution" class="hd-tab-pane"></div>
+          <div id="hd-tab-links" class="hd-tab-pane"></div>
         </div>
       </div>
-    </div>
+    </div><!-- /hd-panel -->
+
   </div>
 </div>
 
@@ -2373,6 +2608,138 @@ function dvCurSize() {
 // 기존 단일 함수 — 호출부 호환용 빈 함수
 function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
+// ── 오른쪽 패널 글자 크기 조절 ──
+var _hdTextIdx = 1;
+window._hdTextIdx = 1;
+var _hdTextSizes = [
+  {size:10, label:'작게'},
+  {size:12, label:'보통'},
+  {size:14, label:'크게'},
+  {size:16, label:'더크게'},
+  {size:18, label:'최대'}
+];
+function hdAdjustText(delta) {
+  _hdTextIdx = Math.max(0, Math.min(_hdTextSizes.length - 1, _hdTextIdx + delta));
+  window._hdTextIdx = _hdTextIdx;
+  var s = _hdTextSizes[_hdTextIdx];
+  var panel = document.getElementById('hd-panel');
+  if (panel) {
+    panel.querySelectorAll('.hd-info-text, .hd-detail-name, .hd-drug-name, .hd-tab-pane p, .hd-tab-pane li').forEach(function(el){
+      el.style.fontSize = s.size + 'px';
+    });
+    panel.querySelectorAll('.hd-detail-name').forEach(function(el){ el.style.fontSize = (s.size + 2) + 'px'; });
+  }
+  var lbl = document.getElementById('hd-text-val');
+  if (lbl) lbl.textContent = s.label;
+}
+window.hdAdjustText = hdAdjustText;
+
+// ── 오른쪽 패널 이미지 크기 조절 ──
+var _hdImgIdx = 1;
+window._hdImgIdx = 1;
+var _hdImgSizes = [
+  {size:60,  label:'작게'},
+  {size:100, label:'보통'},
+  {size:140, label:'크게'},
+  {size:180, label:'더크게'},
+  {size:220, label:'최대'}
+];
+function hdAdjustImg(delta) {
+  _hdImgIdx = Math.max(0, Math.min(_hdImgSizes.length - 1, _hdImgIdx + delta));
+  window._hdImgIdx = _hdImgIdx;
+  var s = _hdImgSizes[_hdImgIdx];
+  var img = document.getElementById('hd-detail-img');
+  if (img) { img.style.maxHeight = s.size + 'px'; }
+  var lbl = document.getElementById('hd-img-val');
+  if (lbl) lbl.textContent = s.label;
+}
+window.hdAdjustImg = hdAdjustImg;
+
+// ── 가운데 구분선 드래그 리사이즈 ──
+(function(){
+  var HD_STORE = 'hdPanelPrefs_v1';
+  function loadPrefs(){ try{ return JSON.parse(localStorage.getItem(HD_STORE)||'{}'); }catch(e){return {};} }
+  function savePrefs(p){ try{ localStorage.setItem(HD_STORE, JSON.stringify(p)); }catch(e){} }
+
+  window.hdSavePrefs = function(){
+    var rightPane = document.getElementById('hd-panel');
+    var w = rightPane ? rightPane.offsetWidth : null;
+    var p = loadPrefs();
+    if (w) p.width = w;
+    p.textIdx = typeof _hdTextIdx !== 'undefined' ? _hdTextIdx : 1;
+    p.imgIdx  = typeof _hdImgIdx  !== 'undefined' ? _hdImgIdx  : 1;
+    savePrefs(p);
+    if (typeof showToast === 'function') showToast('✅ 패널 설정 저장 완료!');
+    else if (typeof toast === 'function') toast('✅ 패널 설정 저장 완료!');
+  };
+
+  function restorePrefs(){
+    var p = loadPrefs();
+    if (p.width) {
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = p.width + 'px'; rightPane.style.minWidth = p.width + 'px'; }
+    }
+    if (p.textIdx !== undefined) {
+      var diff = p.textIdx - (typeof _hdTextIdx !== 'undefined' ? _hdTextIdx : 1);
+      if (diff !== 0 && typeof hdAdjustText === 'function') hdAdjustText(diff);
+    }
+    if (p.imgIdx !== undefined) {
+      var diff2 = p.imgIdx - (typeof _hdImgIdx !== 'undefined' ? _hdImgIdx : 1);
+      if (diff2 !== 0 && typeof hdAdjustImg === 'function') hdAdjustImg(diff2);
+    }
+  }
+
+  function initDividerDrag(){
+    var divider = document.getElementById('dv-divider');
+    if (!divider) return;
+    var _drag = null;
+    divider.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      var rightPane = document.getElementById('hd-panel');
+      if (!rightPane) return;
+      _drag = { startX: e.clientX, startW: rightPane.offsetWidth };
+      divider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function(e){
+      if (!_drag) return;
+      var delta = e.clientX - _drag.startX;
+      var newW = Math.max(220, Math.min(720, _drag.startW - delta));
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
+    });
+    document.addEventListener('mouseup', function(){
+      if (!_drag) return;
+      _drag = null;
+      divider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+    divider.addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      var rightPane = document.getElementById('hd-panel');
+      if (!rightPane) return;
+      _drag = { startX: t.clientX, startW: rightPane.offsetWidth };
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if (!_drag) return;
+      var t = e.touches[0];
+      var delta = t.clientX - _drag.startX;
+      var newW = Math.max(220, Math.min(720, _drag.startW - delta));
+      var rightPane = document.getElementById('hd-panel');
+      if (rightPane) { rightPane.style.width = newW + 'px'; rightPane.style.minWidth = newW + 'px'; }
+    }, {passive:true});
+    document.addEventListener('touchend', function(){ _drag = null; });
+    restorePrefs();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDividerDrag);
+  } else {
+    initDividerDrag();
+  }
+})();
+
 function dvMethodDesc(code) {
   var c = (code||'').toLowerCase().trim();
   var m = {'b1':'오전','b2':'점심','b3':'저녁','b4':'취침전',
@@ -2401,7 +2768,20 @@ function dvSetStatus(type, msg) {
   }
 }
 
-function initDrugViewTab() { dvStartRealtime(''); }
+function initDrugViewTab() {
+  dvStartRealtime('');
+  // Han_drugs 패널 초기화 (약물 목록 로드)
+  var panel = document.getElementById('hd-panel');
+  panel.classList.add('visible');
+  if (_hdAllDrugs.length === 0) {
+    if (typeof allDrugs !== 'undefined' && allDrugs.length) {
+      _hdAllDrugs = allDrugs;
+      hdRenderList(_hdAllDrugs);
+    } else {
+      hdLoadDrugs();
+    }
+  }
+}
 
 // 페이지 열자마자 전체 감시 시작
 window.addEventListener('DOMContentLoaded', function(){ dvStartRealtime(''); });
@@ -2556,10 +2936,17 @@ async function dvLoad() {
       var tr = document.createElement('tr');
       tr.style.background = idx%2===0 ? '#fff' : '#f9fafb';
 
-      // 약물코드
+      // 약물코드 (클릭시 Han_drugs 패널 연동)
       var tdCode = document.createElement('td');
       tdCode.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;';
-      tdCode.innerHTML = '<span style="font-family:monospace;font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 7px;border-radius:4px;border:1px solid #bfdbfe;">'+(d.drug_code||'')+'</span>';
+      var codeSpan = document.createElement('span');
+      codeSpan.className = 'dv-code-link';
+      codeSpan.title = '클릭: 약물 상세정보 보기';
+      codeSpan.textContent = d.drug_code || '';
+      codeSpan.setAttribute('data-code', d.drug_code||'');
+      codeSpan.setAttribute('data-name', d.drug_name||'');
+      codeSpan.onclick = (function(code, name){ return function(){ hdOpenByCode(code, name, this); }; })(d.drug_code||'', d.drug_name||'');
+      tdCode.appendChild(codeSpan);
       tr.appendChild(tdCode);
 
       // 약물명
@@ -2616,6 +3003,309 @@ async function dvLoad() {
     dvSetStatus('error', '오류: ' + e.message);
   }
 }
+
+// ══ Han_drugs 약물상세 패널 ══════════════════════════════
+
+var _hdAllDrugs = [];
+var _hdRendered = [];
+var _hdCurrent  = null;
+var _hdActiveCodeEl = null;
+
+// Han_drugs 패널 초기화: dvLoad 이후 약물 목록을 공유
+function hdInitPanel() {
+  var panel = document.getElementById('hd-panel');
+  panel.classList.add('visible');
+  // allDrugs (admin_test 전역 변수) 공유
+  if (typeof allDrugs !== 'undefined' && allDrugs.length) {
+    _hdAllDrugs = allDrugs;
+    hdRenderList(_hdAllDrugs);
+  } else {
+    // 직접 Supabase에서 로드
+    hdLoadDrugs();
+  }
+}
+
+async function hdLoadDrugs() {
+  try {
+    var res = await sb.from('drug_codes').select('*').order('name');
+    if (res.error) throw res.error;
+    _hdAllDrugs = res.data || [];
+    hdRenderList(_hdAllDrugs);
+  } catch(e) {
+    document.getElementById('hd-drug-list').innerHTML =
+      '<div class="hd-empty-state"><div class="hd-empty-icon">⚠️</div><div class="hd-empty-text">목록 불러오기 실패</div></div>';
+  }
+}
+
+function hdClosePanel() {
+  document.getElementById('hd-panel').classList.remove('visible');
+  var div = document.getElementById('dv-divider');
+  if (div) div.classList.remove('visible');
+  if (_hdActiveCodeEl) { _hdActiveCodeEl.classList.remove('active'); _hdActiveCodeEl = null; }
+}
+
+function hdOnSearch() {
+  var q = (document.getElementById('hd-search').value || '').trim().toLowerCase();
+  var filtered = q ? _hdAllDrugs.filter(function(d){
+    return (d.name||'').toLowerCase().includes(q) || (d.code||'').toLowerCase().includes(q);
+  }) : _hdAllDrugs;
+  hdRenderList(filtered);
+  document.getElementById('hd-list-label').textContent = q ? '검색 결과 ' + filtered.length + '개' : '전체 약물';
+}
+
+// 카테고리 스타일 매핑 (Han_drugs와 동일 로직)
+var HD_CAT_MAP = [
+  {keys:['항우울','ssri','우울','snri'],    label:'항우울제',  cls:'antidep', icon:'🧠'},
+  {keys:['항불안','불안','벤조'],           label:'항불안제',  cls:'anxio',   icon:'🌿'},
+  {keys:['수면','자나','졸피','트리아'],    label:'수면제',    cls:'sleep',   icon:'🌙'},
+  {keys:['기분','리튬','발프'],             label:'기분조절',  cls:'mood',    icon:'💜'},
+  {keys:['항정신','비정형'],               label:'항정신병약',cls:'anxio',   icon:'🧩'},
+  {keys:['치매','알츠'],                   label:'치매치료제',cls:'mood',    icon:'🔵'},
+  {keys:['위장','소화'],                   label:'소화기약',  cls:'other',   icon:'🟢'},
+];
+var HD_CAT_CLS_COLOR = {
+  antidep:'background:#ede9fe;color:#5b21b6;',
+  anxio:'background:#d1fae5;color:#065f46;',
+  adhd:'background:#fef3c7;color:#92400e;',
+  sleep:'background:#dbeafe;color:#1e40af;',
+  mood:'background:#fce7f3;color:#9d174d;',
+  other:'background:#f3f4f6;color:#374151;',
+};
+function hdGetCat(dbCat, name) {
+  var raw = (dbCat||'').trim();
+  var check = (raw || name || '').toLowerCase();
+  for (var i=0; i<HD_CAT_MAP.length; i++) {
+    var s = HD_CAT_MAP[i];
+    if (s.keys.some(function(k){ return check.includes(k); }))
+      return {label: raw||s.label, cls: s.cls, icon: s.icon};
+  }
+  return {label: raw||'기타', cls:'other', icon:'💊'};
+}
+
+function hdRenderList(drugs) {
+  _hdRendered = drugs;
+  var el = document.getElementById('hd-drug-list');
+  if (!drugs.length) {
+    el.innerHTML = '<div class="hd-empty-state"><div class="hd-empty-icon" style="font-size:28px;opacity:0.3;">🔍</div><div class="hd-empty-text">검색 결과가 없습니다.</div></div>';
+    return;
+  }
+  el.innerHTML = drugs.slice(0, 80).map(function(d, i) {
+    var cat = hdGetCat(d.category, d.name);
+    var catStyle = HD_CAT_CLS_COLOR[cat.cls] || HD_CAT_CLS_COLOR.other;
+    var imgHtml = d.image_url
+      ? '<img src="'+d.image_url+'" alt="" onerror="this.style.display=\'none\'">'
+      : cat.icon;
+    return '<div class="hd-drug-item" onclick="hdOpenDetail('+i+')">' +
+      '<div class="hd-drug-icon">' + imgHtml + '</div>' +
+      '<div class="hd-drug-info">' +
+        '<div class="hd-drug-name">' + (d.name||d.code||'') + '</div>' +
+        '<div class="hd-drug-code">' + (d.code||'') + '</div>' +
+        '<span class="hd-cat-badge" style="'+catStyle+'">' + cat.label + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 약물코드 클릭 → 해당 약물 바로 열기
+function hdOpenByCode(code, name, codeEl) {
+  // 패널 열기
+  var panel = document.getElementById('hd-panel');
+  if (!panel.classList.contains('visible')) {
+    panel.classList.add('visible');
+    var div = document.getElementById('dv-divider');
+    if (div) div.classList.add('visible');
+    if (_hdAllDrugs.length === 0) {
+      hdLoadDrugs().then(function(){ hdFindAndOpen(code, name); });
+      return;
+    }
+  }
+  // 이전 active 코드 스타일 초기화
+  if (_hdActiveCodeEl) _hdActiveCodeEl.classList.remove('active');
+  _hdActiveCodeEl = codeEl;
+  codeEl.classList.add('active');
+  hdFindAndOpen(code, name);
+}
+
+function hdFindAndOpen(code, name) {
+  var drug = _hdAllDrugs.find(function(d){ return (d.code||'').toLowerCase() === (code||'').toLowerCase(); });
+  if (!drug && name) {
+    // 이름으로 퍼지 매칭
+    var nameLower = name.toLowerCase().replace(/\s/g,'').replace(/[0-9.mg]/g,'');
+    drug = _hdAllDrugs.find(function(d){
+      var dn = (d.name||'').toLowerCase().replace(/\s/g,'').replace(/[0-9.mg]/g,'');
+      return dn === nameLower || dn.includes(nameLower) || nameLower.includes(dn);
+    });
+  }
+  if (drug) {
+    _hdCurrent = drug;
+    hdShowDetail(drug);
+  } else {
+    // 검색창에 이름 넣고 목록 표시
+    document.getElementById('hd-detail-area').style.display = 'none';
+    document.getElementById('hd-list-area').style.display = 'block';
+    var q = name || code;
+    document.getElementById('hd-search').value = q;
+    hdOnSearch();
+    showToast('💊 "' + q + '" 약물을 검색합니다');
+  }
+}
+
+function hdOpenDetail(idx) {
+  var d = _hdRendered[idx];
+  if (!d) return;
+  _hdCurrent = d;
+  hdShowDetail(d);
+}
+
+// ★ 현재 저장된 글자/이미지 크기를 패널 전체에 즉시 적용
+function hdApplyCurrentSizes() {
+  var ts = _hdTextSizes[_hdTextIdx];
+  var panel = document.getElementById('hd-panel');
+  if (panel && ts) {
+    panel.querySelectorAll('.hd-info-text, .hd-drug-name, .hd-tab-pane p, .hd-tab-pane li').forEach(function(el){
+      el.style.fontSize = ts.size + 'px';
+    });
+    panel.querySelectorAll('.hd-detail-name').forEach(function(el){
+      el.style.fontSize = (ts.size + 2) + 'px';
+    });
+  }
+  var is = _hdImgSizes[_hdImgIdx];
+  var img = document.getElementById('hd-detail-img');
+  if (img && is) img.style.maxHeight = is.size + 'px';
+}
+
+function hdShowDetail(d) {
+  document.getElementById('hd-list-area').style.display = 'none';
+  document.getElementById('hd-detail-area').style.display = 'block';
+
+  var cat = hdGetCat(d.category, d.name);
+  document.getElementById('hd-detail-icon').textContent = cat.icon;
+  document.getElementById('hd-detail-name').textContent = d.name || d.code || '';
+  document.getElementById('hd-detail-code').textContent = '코드: ' + (d.code||'-') + ' · ' + cat.label;
+
+  if (d.image_url) {
+    var img = document.getElementById('hd-detail-img');
+    img.src = d.image_url;
+    img.style.maxHeight = _hdImgSizes[_hdImgIdx].size + 'px';
+    document.getElementById('hd-detail-img-wrap').style.display = 'block';
+    document.getElementById('hd-detail-icon').style.display = 'none';
+  } else {
+    document.getElementById('hd-detail-img-wrap').style.display = 'none';
+    document.getElementById('hd-detail-icon').style.display = 'block';
+  }
+
+  hdSwitchTab('effect');
+  if (d.effect || d.side_effects || d.mechanism) {
+    hdRenderDrugInfo(d);
+  } else {
+    hdLoadAiInfo(d);
+  }
+  hdApplyCurrentSizes();
+}
+
+function hdBackToList() {
+  document.getElementById('hd-detail-area').style.display = 'none';
+  document.getElementById('hd-list-area').style.display = 'block';
+}
+
+function hdSwitchTab(tab) {
+  var tabs = ['effect','side','mech','interact','caution','links'];
+  var btns = document.querySelectorAll('.hd-tab-btn');
+  btns.forEach(function(b, i){ b.classList.toggle('active', tabs[i]===tab); });
+  tabs.forEach(function(t){
+    var el = document.getElementById('hd-tab-'+t);
+    if (el) el.classList.toggle('active', t===tab);
+  });
+  if (typeof hdApplyCurrentSizes === 'function') hdApplyCurrentSizes();
+}
+
+function hdParseBadges(text) {
+  if (!text) return [];
+  return text.split(/[,\/\n]/).map(function(s){ return s.trim(); }).filter(Boolean).slice(0,8);
+}
+
+function hdRenderDrugInfo(d) {
+  document.getElementById('hd-tab-effect').innerHTML =
+    '<div class="hd-info-card"><div class="hd-info-label">효능 및 적응증</div>' +
+    '<div class="hd-info-text">' + (d.effect||'정보 없음') + '</div></div>';
+
+  var sides = hdParseBadges(d.side_effects);
+  document.getElementById('hd-tab-side').innerHTML =
+    '<div class="hd-info-card"><div class="hd-info-label">주요 부작용</div>' +
+    '<div class="hd-badge-list">' + sides.map(function(s,i){
+      return '<span class="hd-badge ' + (i<2?'hd-badge-danger':i<4?'hd-badge-warn':'hd-badge-info') + '">' + s + '</span>';
+    }).join('') + '</div></div>' +
+    (d.side_effects_detail ? '<div class="hd-info-card"><div class="hd-info-label">상세</div><div class="hd-info-text">'+d.side_effects_detail+'</div></div>' : '');
+
+  document.getElementById('hd-tab-mech').innerHTML =
+    '<div class="hd-info-card"><div class="hd-info-label">작용 기전</div>' +
+    '<div class="hd-info-text">' + (d.mechanism||'정보 없음') + '</div></div>';
+
+  document.getElementById('hd-tab-interact').innerHTML =
+    '<div class="hd-info-card"><div class="hd-info-label">상호작용</div>' +
+    '<div class="hd-info-text">' + (d.interactions||'등록된 상호작용 정보가 없습니다.') + '</div></div>';
+
+  document.getElementById('hd-tab-caution').innerHTML =
+    '<div class="hd-info-card"><div class="hd-info-label">복용 주의사항</div>' +
+    '<div class="hd-info-text">' + (d.precautions||'담당 의사의 지시에 따라 복용하세요.') + '</div></div>' +
+    '<div class="hd-info-card" style="background:#fff8f0;"><div class="hd-info-label" style="color:#b45309;">⚠️ 중요 안내</div>' +
+    '<div class="hd-info-text" style="font-size:11px;">이 정보는 참고용입니다. 복용량 변경이나 중단은 반드시 담당 의사와 상의하세요.</div></div>';
+
+  // 외부 링크
+  var healthLink = d.health_kr_link || '';
+  var ysarangLink = d.ysarang_link || '';
+  var hasLink = healthLink || ysarangLink;
+  document.getElementById('hd-tab-links').innerHTML =
+    '<div class="hd-info-card">' +
+    '<div class="hd-info-label">외부 참고 사이트</div>' +
+    '<div class="hd-info-text" style="font-size:11px;color:#6b7280;margin-bottom:12px;">아래 버튼을 클릭하면 외부 사이트에서 상세 정보를 확인할 수 있습니다.</div>' +
+    (hasLink ? [
+      healthLink ? '<a href="'+healthLink+'" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#fff;border:1.5px solid #3b82f6;border-radius:10px;text-decoration:none;margin-bottom:8px;transition:background 0.15s;" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#fff\'"><div style="width:32px;height:32px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💊</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;color:#1e40af;">약학정보원</div><div style="font-size:10px;color:#6b7280;">DUR, 성분, 허가사항</div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>' : '',
+      ysarangLink ? '<a href="'+ysarangLink+'" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:#fff;border:1.5px solid #10b981;border-radius:10px;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'"><div style="width:32px;height:32px;border-radius:8px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏥</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;color:#065f46;">의사랑</div><div style="font-size:10px;color:#6b7280;">처방 및 임상 정보</div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>' : ''
+    ].join('') :
+    '<div style="text-align:center;padding:24px 0;color:#adb5bd;"><div style="font-size:28px;margin-bottom:8px;">🔗</div><div style="font-size:12px;">등록된 외부 링크가 없습니다.</div></div>') +
+    '</div>';
+  hdApplyCurrentSizes();
+}
+
+var HD_SUPA_URL = 'https://rurbfcocihvapbtdzbyt.supabase.co';
+var HD_CLAUDE_PROXY = HD_SUPA_URL + '/functions/v1/claude-proxy';
+
+async function hdLoadAiInfo(d) {
+  var loading = '<div class="hd-ai-loading"><div class="hd-ai-spinner"></div><div class="hd-ai-loading-text">AI가 분석 중...</div></div>';
+  ['effect','side','mech','interact','caution'].forEach(function(t){
+    var el = document.getElementById('hd-tab-'+t);
+    if (el) el.innerHTML = loading;
+  });
+  try {
+    var anon = (typeof ANON_KEY !== 'undefined') ? ANON_KEY : '';
+    var prompt = '당신은 정신건강의학과 전문 약사입니다. 약물 "' + (d.name||d.code) + '"에 대해 환자가 이해하기 쉬운 한국어로 다음 JSON 형식으로만 답하세요 (마크다운 없이):\n' +
+      '{"effect":"효능 2-3문장","side_effects":"부작용 쉼표구분 5-7개","side_effects_detail":"부작용 상세 2-3문장","mechanism":"기전 2-3문장","interactions":"상호작용 2-3문장","precautions":"주의사항 2-3문장"}';
+
+    var res = await fetch(HD_CLAUDE_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+anon},
+      body: JSON.stringify({model:'claude-sonnet-4-5', max_tokens:1000, messages:[{role:'user',content:prompt}]})
+    });
+    var rawText = await res.text();
+    var json; try { json = JSON.parse(rawText); } catch(e) { throw new Error('파싱 실패'); }
+    var text = json.content?.[0]?.text || json.text || json.result || rawText;
+    var clean = text.replace(/```json|```/g,'').trim();
+    var info = {}; try { info = JSON.parse(clean); } catch(e) { info = {effect:text}; }
+    var merged = Object.assign({}, d, info);
+    hdRenderDrugInfo(merged);
+    hdApplyCurrentSizes();
+  } catch(e) {
+    var err = '<div class="hd-empty-state"><div class="hd-empty-icon">⚠️</div><div class="hd-empty-text">AI 정보를 불러올 수 없습니다.</div></div>';
+    ['effect','side','mech','interact','caution'].forEach(function(t){
+      var el = document.getElementById('hd-tab-'+t);
+      if (el) el.innerHTML = err;
+    });
+  }
+}
+
+// dvLoad 이후 패널 자동 초기화 훅
+var _origDvLoad = typeof dvLoad === 'function' ? dvLoad : null;
 
 async function dvSaveImage() {
   var area = document.getElementById('dv-print-area');

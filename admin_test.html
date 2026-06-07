@@ -1858,10 +1858,12 @@ function doLogout(){
 }
 
 document.addEventListener('DOMContentLoaded',async function(){
-  // 저장된 글자크기 복원
-  var savedFs = parseInt(localStorage.getItem('tblFontSize')||'14');
-  _tblFs = savedFs;
-  applyTblFontSize(_tblFs);
+  // 저장된 글자크기 복원 (함수 정의 이후 실행되므로 안전)
+  setTimeout(function(){
+    var savedFs = parseInt(localStorage.getItem('tblFontSize')||'14');
+    _tblFs = savedFs;
+    applyTblFontSize(_tblFs);
+  }, 0);
   // 결과지 직접 링크: #result-세션ID (비번 없이 접근 가능)
   const hash=location.hash;
   if(hash.startsWith('#result-')){
@@ -2170,7 +2172,6 @@ function saveAllSettings(){
   toast('✅ 간격 + 글자크기 저장 완료!');
 }
 // ─────────────────────────────────────────────────────
-}
 
 // 저장된 컬럼 너비 복원
 function restoreColWidths(){

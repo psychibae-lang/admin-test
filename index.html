@@ -78,7 +78,7 @@ th{text-align:left;padding:13px 14px;font-weight:700;font-size:calc(var(--tbl-fs
 th:hover{color:#1a1a1a}
 td{padding:11px 13px;border-bottom:1px solid #f5f5f3;vertical-align:middle;font-size:var(--tbl-fs,14px);font-weight:600}
 tr:hover td{background:#fafaf9}
-.sev{display:inline-block;font-size:var(--tbl-fs,14px);padding:3px 10px;border-radius:10px;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sev{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;font-size:var(--tbl-fs,14px);padding:3px 10px;border-radius:10px;font-weight:500;white-space:normal;word-break:break-all;max-width:100%;overflow:hidden}
 .sev-n{background:#d1fae5;color:#065f46}.sev-m{background:#fef3c7;color:#92400e}
 .sev-mo{background:#ffedd5;color:#9a3412}.sev-s{background:#fee2e2;color:#991b1b}
 .sort-asc::after{content:' ↑'}.sort-desc::after{content:' ↓'}
@@ -174,8 +174,8 @@ th .resizer::after{content:'';position:absolute;right:1px;top:20%;height:60%;wid
 
 /* 검사해석 셀 넘침 방지 */
 .col-interp{overflow:hidden}
-td.col-interp-cell{max-width:160px;overflow:hidden}
-td.col-interp-cell .sev{max-width:100%;overflow:hidden;text-overflow:ellipsis;display:block}
+td.col-interp-cell{max-width:160px;overflow:hidden;vertical-align:middle}
+td.col-interp-cell .sev{max-width:100%}
 
 /* COMMENT 셀 넘침 방지 */
 td.col-comment-cell, #tbl-wrap td:nth-child(8){

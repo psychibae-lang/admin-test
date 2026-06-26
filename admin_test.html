@@ -1062,7 +1062,7 @@ function renderRow(sess,res){
   const resId=res?.id||'';
   const rowKey=sess.id+(res?.scale_id||'');
   return`<tr>
-    <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' onchange='updateDelBar()'></td>
+    <td><input type='checkbox' class='chk row-chk' data-key='${rowKey}' data-sess='${sess.id}' data-scale='${res?.scale_id||''}' data-id='${resId}' onchange='updateDelBar()'></td>
     <td style="font-size:12px;white-space:nowrap;color:#888">
       ${ts}<br>
       <button class="btn sm" style="margin-top:3px;font-size:12px;color:#2563eb;border-color:#bfdbfe" 
@@ -1720,7 +1720,7 @@ function toggleAll(el){
 function updateDelBar(){
   selectedKeys.clear();
   document.querySelectorAll('.row-chk:checked').forEach(chk=>{
-    selectedKeys.add(chk.dataset.key+'|'+chk.dataset.sess+'|'+chk.dataset.scale);
+    selectedKeys.add(chk.dataset.key+'|'+chk.dataset.sess+'|'+chk.dataset.scale+'|'+(chk.dataset.id||''));
   });
   const bar=document.getElementById('del-bar');
   const cnt=document.getElementById('del-count');
@@ -1751,14 +1751,15 @@ async function deleteSelected(){
   
   // sessId별로 묶기
   const sessToDelete=new Set();
-  const resToDelete=[]; // {sessId, scaleId}
+  const resToDelete=[]; // {sessId, scaleId, resId}
   
   selectedKeys.forEach(k=>{
     const parts=k.split('|');
     const sessId=parts[1];
     const scaleId=parts[2];
-    if(scaleId){
-      resToDelete.push({sessId,scaleId});
+    const resId=parts[3];
+    if(resId){
+      resToDelete.push({sessId,scaleId,resId});
     } else {
       sessToDelete.add(sessId);
     }
@@ -1766,9 +1767,10 @@ async function deleteSelected(){
   
   let errCount=0;
   
-  // results 삭제
-  for(const {sessId,scaleId} of resToDelete){
-    const{error}=await sb.from('results').delete().eq('session_id',sessId).eq('scale_id',scaleId);
+  // results 삭제 (반드시 결과의 고유 id로 삭제 - session_id+scale_id로 지우면
+  // 같은 검사가 중복 저장된 경우 선택하지 않은 중복 행까지 함께 삭제되어 버림)
+  for(const {resId} of resToDelete){
+    const{error}=await sb.from('results').delete().eq('id',resId);
     if(error)errCount++;
   }
   
@@ -1779,7 +1781,7 @@ async function deleteSelected(){
     if(error)errCount++;
   }
   
-  // results 삭제 후 해당 session에 results가 없으면 session도 삭제
+  // results 삭제 후 해당 session에 results가 하나도 안 남았으면 session도 삭제
   const deletedSessIds=new Set(resToDelete.map(r=>r.sessId));
   for(const sessId of deletedSessIds){
     const{data:remaining}=await sb.from('results').select('id').eq('session_id',sessId).limit(1);

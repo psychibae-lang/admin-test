@@ -2979,7 +2979,7 @@ async function dvLoad() {
     var s = dvCurSize();
     drugs.forEach(function(d, idx) {
       var imgUrl = _dvCodeMap[d.drug_code] || '';
-      var totalDose = (function(dose,freq){var dv=parseFloat(dose),fv=parseFloat(freq);return (!isNaN(dv)&&!isNaN(fv))?(dv*fv):((dose||'')+(freq?'×'+freq:''));})(d.dose, d.daily_freq);
+      var totalDose = d.dose || '';
       var tr = document.createElement('tr');
       tr.style.background = idx%2===0 ? '#fff' : '#f9fafb';
 

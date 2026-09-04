@@ -3030,12 +3030,12 @@ async function dvLoad() {
       // 일투·일수·용법·용법설명
       [d.daily_freq||'', d.days||'', d.method||''].forEach(function(v){
         var td = document.createElement('td');
-        td.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;';
+        td.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:15px;font-weight:800;';
         td.textContent = v;
         tr.appendChild(td);
       });
       var tdDesc = document.createElement('td');
-      tdDesc.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;';
+      tdDesc.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-size:15px;font-weight:800;color:#888;white-space:nowrap;';
       tdDesc.textContent = dvMethodDesc(d.method);
       tr.appendChild(tdDesc);
 

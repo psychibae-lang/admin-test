@@ -2459,7 +2459,7 @@ function applyTblAlign(){
           <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🔤 글자</span>
           <button onclick="dvAdjustText(-1)"
             style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
-          <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+          <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">가장크게</span>
           <button onclick="dvAdjustText(1)"
             style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
           <!-- 이미지 크기 -->
@@ -2529,12 +2529,12 @@ function applyTblAlign(){
         <div class="hd-size-bar" id="hd-size-bar">
           <span class="hd-size-bar-lbl">🔤 글자</span>
           <button class="hd-size-btn" onclick="hdAdjustText(-1)">−</button>
-          <span class="hd-size-val" id="hd-text-val">보통</span>
+          <span class="hd-size-val" id="hd-text-val">최대</span>
           <button class="hd-size-btn" onclick="hdAdjustText(1)">＋</button>
           <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
           <span class="hd-size-bar-lbl">🖼 이미지</span>
           <button class="hd-size-btn" onclick="hdAdjustImg(-1)">−</button>
-          <span class="hd-size-val" id="hd-img-val">보통</span>
+          <span class="hd-size-val" id="hd-img-val">최대</span>
           <button class="hd-size-btn" onclick="hdAdjustImg(1)">＋</button>
           <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
           <button onclick="hdSavePrefs()" style="padding:3px 10px;background:#1a1a1a;color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
@@ -2607,7 +2607,7 @@ function dvApplyZoom(val) {
 }
 
 // ── 글자 크기 독립 조절 ──
-var _dvTextIdx = 2;
+var _dvTextIdx = 5;
 var _dvTextSizes = [
   {size:9,  label:'아주작게'},
   {size:11, label:'작게'},
@@ -2656,8 +2656,8 @@ function dvCurSize() {
 function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
 // ── 오른쪽 패널 글자 크기 조절 ──
-var _hdTextIdx = 1;
-window._hdTextIdx = 1;
+var _hdTextIdx = 4;
+window._hdTextIdx = 4;
 var _hdTextSizes = [
   {size:10, label:'작게'},
   {size:12, label:'보통'},
@@ -2682,8 +2682,8 @@ function hdAdjustText(delta) {
 window.hdAdjustText = hdAdjustText;
 
 // ── 오른쪽 패널 이미지 크기 조절 ──
-var _hdImgIdx = 1;
-window._hdImgIdx = 1;
+var _hdImgIdx = 4;
+window._hdImgIdx = 4;
 var _hdImgSizes = [
   {size:60,  label:'작게'},
   {size:100, label:'보통'},

@@ -1069,11 +1069,15 @@ function renderRow(sess,res){
         onclick="copySessionAll('${sess.id}')">전체복사</button>
     </td>
     <td style="font-weight:700;white-space:nowrap">
-      <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
+      <span onclick="filterByName('${(sess.patient_name||'').replace(/'/g,"\'")}')"
         style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
         onmouseover="this.style.background='#f0f9ff'" 
         onmouseout="this.style.background=''"
-        title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
+        title="클릭하여 이 이름으로 목록 필터">${sess.patient_name||''}</span><span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
+        style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
+        onmouseover="this.style.background='#f0f9ff'" 
+        onmouseout="this.style.background=''"
+        title="클릭하여 이름 수정"> ✎</span>
     </td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
     <td style="font-weight:700;font-size:14px;white-space:nowrap">${res?extra.display||res.score:''}</td>
@@ -1706,6 +1710,12 @@ async function editName(sessId, currentName, el){
   allSessions.forEach(s=>{if(s.id===sessId)s.patient_name=newName.trim();});
   allResults.forEach(r=>{if(r.session_id===sessId)r.patient_name=newName.trim();});
   renderTable();
+}
+
+function filterByName(name){
+  const inp=document.getElementById('f-name');
+  if(inp){ inp.value=name; }
+  loadResults();
 }
 
 let selectedKeys=new Set();

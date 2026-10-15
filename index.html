@@ -1069,11 +1069,15 @@ function renderRow(sess,res){
         onclick="copySessionAll('${sess.id}')">전체복사</button>
     </td>
     <td style="font-weight:700;white-space:nowrap">
-      <span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
+      <span onclick="filterByName('${(sess.patient_name||'').replace(/'/g,"\'")}')"
         style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
         onmouseover="this.style.background='#f0f9ff'" 
         onmouseout="this.style.background=''"
-        title="클릭하여 이름 수정">${sess.patient_name||''} ✎</span>
+        title="클릭하여 이 이름으로 목록 필터">${sess.patient_name||''}</span><span onclick="editName('${sess.id}','${(sess.patient_name||'').replace(/'/g,"\'")}',this)"
+        style="cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.15s"
+        onmouseover="this.style.background='#f0f9ff'" 
+        onmouseout="this.style.background=''"
+        title="클릭하여 이름 수정"> ✎</span>
     </td>
     <td>${sc?`<span class="sc-tag ${TAG_CLS[sc.cat]||'tag-other'}">${sc.name}</span>`:(sess.status==='대기중'?`<span class="status-badge s-wait">대기중</span>`:'-')}</td>
     <td style="font-weight:700;font-size:14px;white-space:nowrap">${res?extra.display||res.score:''}</td>
@@ -1706,6 +1710,12 @@ async function editName(sessId, currentName, el){
   allSessions.forEach(s=>{if(s.id===sessId)s.patient_name=newName.trim();});
   allResults.forEach(r=>{if(r.session_id===sessId)r.patient_name=newName.trim();});
   renderTable();
+}
+
+function filterByName(name){
+  const inp=document.getElementById('f-name');
+  if(inp){ inp.value=name; }
+  loadResults();
 }
 
 let selectedKeys=new Set();
@@ -2370,7 +2380,7 @@ function applyTblAlign(){
 }
 .hd-tab-nav::-webkit-scrollbar { display:none; }
 .hd-tab-btn {
-  padding:8px 10px; font-size:11px; font-weight:500; color:#6b7280;
+  padding:8px 10px; font-size:15px; font-weight:500; color:#6b7280;
   border:none; background:none; cursor:pointer; white-space:nowrap;
   border-bottom:2px solid transparent; font-family:inherit; transition:all 0.15s;
 }
@@ -2459,7 +2469,7 @@ function applyTblAlign(){
           <span style="font-size:11px;color:#bbb;border-left:1px solid #e0e0e0;padding-left:10px;white-space:nowrap;">🔤 글자</span>
           <button onclick="dvAdjustText(-1)"
             style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">−</button>
-          <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">보통</span>
+          <span id="dv-text-label" style="font-size:11px;font-weight:700;color:#2563eb;min-width:28px;text-align:center;">가장크게</span>
           <button onclick="dvAdjustText(1)"
             style="width:26px;height:26px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:14px;line-height:1;font-weight:700;">＋</button>
           <!-- 이미지 크기 -->
@@ -2473,10 +2483,21 @@ function applyTblAlign(){
 
         <!-- 인쇄/캡처 영역 -->
         <div id="dv-print-area" style="background:#fff;border:1px solid #ebebeb;border-radius:10px;padding:18px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
             <div>
               <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">한강의원 복용약물</div>
               <div style="font-size:20px;font-weight:900;color:#1a1a1a;">차트 <span id="dv-print-chart" style="color:#2563eb;font-family:monospace;"></span></div>
+            </div>
+            <!-- 최근내원일 / 다음내원일 (management 의 visits 테이블 최신 행) -->
+            <div id="dv-visit-badges" style="display:flex;gap:12px;align-items:center;">
+              <div style="background:#eaffea;border:2px solid #86e086;border-radius:12px;padding:8px 20px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#2d7d2d;">최근내원일</div>
+                <div id="dv-last-visit" style="font-size:22px;font-weight:900;color:#1a6b1a;white-space:nowrap;">—</div>
+              </div>
+              <div style="background:#eaffea;border:2px solid #86e086;border-radius:12px;padding:8px 20px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#2d7d2d;">다음내원일</div>
+                <div id="dv-next-visit" style="font-size:22px;font-weight:900;color:#1a6b1a;white-space:nowrap;">—</div>
+              </div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:10px;color:#888;margin-bottom:3px;">저장날짜</div>
@@ -2497,13 +2518,13 @@ function applyTblAlign(){
               </colgroup>
               <thead>
                 <tr>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물코드</th>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물명</th>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">이미지</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물코드</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">약물명</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">이미지</th>
                   <th style="background:#fefce8;color:#b45309;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #fde68a;">하루총용량</th>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일투</th>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일수</th>
-                  <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">용법</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일투</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">일수</th>
+                  <th style="background:#eff6ff;color:#3b82f6;font-size:15px;font-weight:700;padding:8px 10px;text-align:center;border-bottom:2px solid #bfdbfe;">용법</th>
                   <th style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid #bfdbfe;">용법설명</th>
                 </tr>
               </thead>
@@ -2529,12 +2550,12 @@ function applyTblAlign(){
         <div class="hd-size-bar" id="hd-size-bar">
           <span class="hd-size-bar-lbl">🔤 글자</span>
           <button class="hd-size-btn" onclick="hdAdjustText(-1)">−</button>
-          <span class="hd-size-val" id="hd-text-val">보통</span>
+          <span class="hd-size-val" id="hd-text-val">최대</span>
           <button class="hd-size-btn" onclick="hdAdjustText(1)">＋</button>
           <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
           <span class="hd-size-bar-lbl">🖼 이미지</span>
           <button class="hd-size-btn" onclick="hdAdjustImg(-1)">−</button>
-          <span class="hd-size-val" id="hd-img-val">보통</span>
+          <span class="hd-size-val" id="hd-img-val">최대</span>
           <button class="hd-size-btn" onclick="hdAdjustImg(1)">＋</button>
           <span style="border-left:1px solid #ddd;height:14px;margin:0 2px;"></span>
           <button onclick="hdSavePrefs()" style="padding:3px 10px;background:#1a1a1a;color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
@@ -2607,7 +2628,7 @@ function dvApplyZoom(val) {
 }
 
 // ── 글자 크기 독립 조절 ──
-var _dvTextIdx = 2;
+var _dvTextIdx = 5;
 var _dvTextSizes = [
   {size:9,  label:'아주작게'},
   {size:11, label:'작게'},
@@ -2656,8 +2677,8 @@ function dvCurSize() {
 function dvAdjustSize(delta) { dvAdjustText(delta); dvAdjustImg(delta); }
 
 // ── 오른쪽 패널 글자 크기 조절 ──
-var _hdTextIdx = 1;
-window._hdTextIdx = 1;
+var _hdTextIdx = 4;
+window._hdTextIdx = 4;
 var _hdTextSizes = [
   {size:10, label:'작게'},
   {size:12, label:'보통'},
@@ -2682,8 +2703,8 @@ function hdAdjustText(delta) {
 window.hdAdjustText = hdAdjustText;
 
 // ── 오른쪽 패널 이미지 크기 조절 ──
-var _hdImgIdx = 1;
-window._hdImgIdx = 1;
+var _hdImgIdx = 4;
+window._hdImgIdx = 4;
 var _hdImgSizes = [
   {size:60,  label:'작게'},
   {size:100, label:'보통'},
@@ -2853,6 +2874,7 @@ function showToast(msg, duration) {
 var _dvRealtimeChannel = null;
 var _dvFlashTimer = null;
 var _dvLastChartNo = null;
+var _dvVisitsChannel = null;
 
 function dvStartRealtime(chartNo) {
   // 기존 단일 차트 채널 해제 후 전체 감시로 업그레이드
@@ -2861,6 +2883,20 @@ function dvStartRealtime(chartNo) {
     _dvRealtimeChannel = null;
   }
   _dvLastChartNo = chartNo;
+
+  // 내원일(visits) 감시는 별도 채널 — visits 가 Realtime 미설정이어도 약물 채널에 영향 없도록
+  if (!_dvVisitsChannel) {
+    try {
+      _dvVisitsChannel = sb.channel('dv-visits-global')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, function(payload) {
+          var rec = payload.new || payload.old || {};
+          var changedChart = String(rec.chart_no || '').trim();
+          var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
+          if (changedChart && changedChart === cur) dvLoadVisitBadges(cur);
+        })
+        .subscribe();
+    } catch (e) { console.warn('visits realtime 실패', e); }
+  }
 
   _dvRealtimeChannel = sb.channel('dv-drugs-global')
     .on('postgres_changes', {
@@ -2934,6 +2970,37 @@ function dvShowFlash(chartNo) {
   _dvFlashTimer = setTimeout(function(){ flash.style.display = 'none'; }, 4000);
 }
 
+// 날짜값(YYMMDD 또는 ISO) → "YYMMDD(요일)"
+function dvDate6Label(val) {
+  var s = String(val || '').trim();
+  if (!/^\d{6}$/.test(s)) {
+    var d = new Date(val);
+    if (isNaN(d.getTime())) return s || '—';
+    s = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  }
+  var dt = new Date(2000 + parseInt(s.slice(0,2)), parseInt(s.slice(2,4)) - 1, parseInt(s.slice(4,6)));
+  return s + '(' + ['일','월','화','수','목','금','토'][dt.getDay()] + ')';
+}
+
+// 최근내원일 / 다음내원일 — management 와 동일하게 visits 의 최신 행(id desc) 사용
+async function dvLoadVisitBadges(chartNo) {
+  var lastVisitLabel = '없음', nextVisitLabel = '미선택';
+  try {
+    var vr = await sb.from('visits').select('visit_date,next_visit_date').eq('chart_no', chartNo).order('id', { ascending: false }).limit(1);
+    if (vr.error) throw vr.error;
+    var v = (vr.data && vr.data[0]) || null;
+    if (v) {
+      if (v.visit_date) lastVisitLabel = dvDate6Label(v.visit_date);
+      if (v.next_visit_date) nextVisitLabel = dvDate6Label(v.next_visit_date);
+    }
+  } catch (e) { console.warn('visits 조회 실패', e); return; }
+  // 그 사이 다른 차트를 조회했으면 덮어쓰지 않음
+  var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
+  if (cur && cur !== String(chartNo)) return;
+  document.getElementById('dv-last-visit').textContent = lastVisitLabel;
+  document.getElementById('dv-next-visit').textContent = nextVisitLabel;
+}
+
 async function dvLoad() {
   var chartNo = (document.getElementById('dv-chartno').value||'').trim();
   if (!chartNo) { alert('차트번호를 입력하세요.'); return; }
@@ -2973,13 +3040,19 @@ async function dvLoad() {
     document.getElementById('dv-print-chart').textContent = chartNo;
     document.getElementById('dv-print-date').textContent = dateLabel;
 
+    // 최근내원일 / 다음내원일 — 진료 저장 시 약물과 내원일이 동시에 저장되므로 잠시 후 한 번 더 갱신
+    document.getElementById('dv-last-visit').textContent = '—';
+    document.getElementById('dv-next-visit').textContent = '—';
+    dvLoadVisitBadges(chartNo);
+    setTimeout(function(){ dvLoadVisitBadges(chartNo); }, 1500);
+
     // 테이블 렌더 (크기 조절 클래스 적용)
     var tbody = document.getElementById('dv-tbody');
     tbody.innerHTML = '';
     var s = dvCurSize();
     drugs.forEach(function(d, idx) {
       var imgUrl = _dvCodeMap[d.drug_code] || '';
-      var totalDose = (function(dose,freq){var dv=parseFloat(dose),fv=parseFloat(freq);return (!isNaN(dv)&&!isNaN(fv))?(dv*fv):((dose||'')+(freq?'×'+freq:''));})(d.dose, d.daily_freq);
+      var totalDose = d.dose || '';
       var tr = document.createElement('tr');
       tr.style.background = idx%2===0 ? '#fff' : '#f9fafb';
 
@@ -3024,18 +3097,18 @@ async function dvLoad() {
       // 하루총용량
       var tdTotal = document.createElement('td');
       tdTotal.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;background:#fefce8;';
-      tdTotal.innerHTML = '<span style="font-size:15px;font-weight:800;color:#b45309;">'+totalDose+'</span>';
+      tdTotal.innerHTML = '<span style="font-size:23px;font-weight:800;color:#b45309;">'+totalDose+'</span>';
       tr.appendChild(tdTotal);
 
       // 일투·일수·용법·용법설명
       [d.daily_freq||'', d.days||'', d.method||''].forEach(function(v){
         var td = document.createElement('td');
-        td.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:13px;';
+        td.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;text-align:center;font-size:23px;font-weight:800;';
         td.textContent = v;
         tr.appendChild(td);
       });
       var tdDesc = document.createElement('td');
-      tdDesc.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-size:11px;color:#888;white-space:nowrap;';
+      tdDesc.style.cssText = 'padding:3px 10px;border-bottom:1px solid #f0f0ee;font-size:23px;font-weight:800;color:#888;white-space:nowrap;';
       tdDesc.textContent = dvMethodDesc(d.method);
       tr.appendChild(tdDesc);
 

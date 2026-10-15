@@ -2483,10 +2483,21 @@ function applyTblAlign(){
 
         <!-- 인쇄/캡처 영역 -->
         <div id="dv-print-area" style="background:#fff;border:1px solid #ebebeb;border-radius:10px;padding:18px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;border-bottom:2px solid #bfdbfe;padding-bottom:12px;">
             <div>
               <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">한강의원 복용약물</div>
               <div style="font-size:20px;font-weight:900;color:#1a1a1a;">차트 <span id="dv-print-chart" style="color:#2563eb;font-family:monospace;"></span></div>
+            </div>
+            <!-- 최근내원일 / 다음내원일 (management 의 visits 테이블 최신 행) -->
+            <div id="dv-visit-badges" style="display:flex;gap:12px;align-items:center;">
+              <div style="background:#eaffea;border:2px solid #86e086;border-radius:12px;padding:8px 20px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#2d7d2d;">최근내원일</div>
+                <div id="dv-last-visit" style="font-size:22px;font-weight:900;color:#1a6b1a;white-space:nowrap;">—</div>
+              </div>
+              <div style="background:#eaffea;border:2px solid #86e086;border-radius:12px;padding:8px 20px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#2d7d2d;">다음내원일</div>
+                <div id="dv-next-visit" style="font-size:22px;font-weight:900;color:#1a6b1a;white-space:nowrap;">—</div>
+              </div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:10px;color:#888;margin-bottom:3px;">저장날짜</div>
@@ -2901,6 +2912,17 @@ function dvStartRealtime(chartNo) {
         }, 80);
       }
     })
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'visits'
+    }, function(payload) {
+      // 보고 있는 차트의 내원일이 바뀌면 배지만 갱신
+      var rec = payload.new || payload.old || {};
+      var changedChart = String(rec.chart_no || '').trim();
+      var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
+      if (changedChart && changedChart === cur) dvLoadVisitBadges(cur);
+    })
     .subscribe(function(status) {
       var badge = document.getElementById('dv-rt-badge');
       var txt   = document.getElementById('dv-rt-text');
@@ -2944,6 +2966,37 @@ function dvShowFlash(chartNo) {
   _dvFlashTimer = setTimeout(function(){ flash.style.display = 'none'; }, 4000);
 }
 
+// 날짜값(YYMMDD 또는 ISO) → "YYMMDD(요일)"
+function dvDate6Label(val) {
+  var s = String(val || '').trim();
+  if (!/^\d{6}$/.test(s)) {
+    var d = new Date(val);
+    if (isNaN(d.getTime())) return s || '—';
+    s = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  }
+  var dt = new Date(2000 + parseInt(s.slice(0,2)), parseInt(s.slice(2,4)) - 1, parseInt(s.slice(4,6)));
+  return s + '(' + ['일','월','화','수','목','금','토'][dt.getDay()] + ')';
+}
+
+// 최근내원일 / 다음내원일 — management 와 동일하게 visits 의 최신 행(id desc) 사용
+async function dvLoadVisitBadges(chartNo) {
+  var lastVisitLabel = '없음', nextVisitLabel = '미선택';
+  try {
+    var vr = await sb.from('visits').select('visit_date,next_visit_date').eq('chart_no', chartNo).order('id', { ascending: false }).limit(1);
+    if (vr.error) throw vr.error;
+    var v = (vr.data && vr.data[0]) || null;
+    if (v) {
+      if (v.visit_date) lastVisitLabel = dvDate6Label(v.visit_date);
+      if (v.next_visit_date) nextVisitLabel = dvDate6Label(v.next_visit_date);
+    }
+  } catch (e) { console.warn('visits 조회 실패', e); return; }
+  // 그 사이 다른 차트를 조회했으면 덮어쓰지 않음
+  var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
+  if (cur && cur !== String(chartNo)) return;
+  document.getElementById('dv-last-visit').textContent = lastVisitLabel;
+  document.getElementById('dv-next-visit').textContent = nextVisitLabel;
+}
+
 async function dvLoad() {
   var chartNo = (document.getElementById('dv-chartno').value||'').trim();
   if (!chartNo) { alert('차트번호를 입력하세요.'); return; }
@@ -2982,6 +3035,10 @@ async function dvLoad() {
     document.getElementById('dv-date-label').textContent = dateLabel;
     document.getElementById('dv-print-chart').textContent = chartNo;
     document.getElementById('dv-print-date').textContent = dateLabel;
+
+    // 최근내원일 / 다음내원일 — 진료 저장 시 약물과 내원일이 동시에 저장되므로 잠시 후 한 번 더 갱신
+    await dvLoadVisitBadges(chartNo);
+    setTimeout(function(){ dvLoadVisitBadges(chartNo); }, 1500);
 
     // 테이블 렌더 (크기 조절 클래스 적용)
     var tbody = document.getElementById('dv-tbody');

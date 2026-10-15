@@ -2874,6 +2874,7 @@ function showToast(msg, duration) {
 var _dvRealtimeChannel = null;
 var _dvFlashTimer = null;
 var _dvLastChartNo = null;
+var _dvVisitsChannel = null;
 
 function dvStartRealtime(chartNo) {
   // 기존 단일 차트 채널 해제 후 전체 감시로 업그레이드
@@ -2882,6 +2883,20 @@ function dvStartRealtime(chartNo) {
     _dvRealtimeChannel = null;
   }
   _dvLastChartNo = chartNo;
+
+  // 내원일(visits) 감시는 별도 채널 — visits 가 Realtime 미설정이어도 약물 채널에 영향 없도록
+  if (!_dvVisitsChannel) {
+    try {
+      _dvVisitsChannel = sb.channel('dv-visits-global')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, function(payload) {
+          var rec = payload.new || payload.old || {};
+          var changedChart = String(rec.chart_no || '').trim();
+          var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
+          if (changedChart && changedChart === cur) dvLoadVisitBadges(cur);
+        })
+        .subscribe();
+    } catch (e) { console.warn('visits realtime 실패', e); }
+  }
 
   _dvRealtimeChannel = sb.channel('dv-drugs-global')
     .on('postgres_changes', {
@@ -2911,17 +2926,6 @@ function dvStartRealtime(chartNo) {
           dvLoad();
         }, 80);
       }
-    })
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'visits'
-    }, function(payload) {
-      // 보고 있는 차트의 내원일이 바뀌면 배지만 갱신
-      var rec = payload.new || payload.old || {};
-      var changedChart = String(rec.chart_no || '').trim();
-      var cur = (document.getElementById('dv-print-chart').textContent || '').trim();
-      if (changedChart && changedChart === cur) dvLoadVisitBadges(cur);
     })
     .subscribe(function(status) {
       var badge = document.getElementById('dv-rt-badge');
@@ -3037,7 +3041,9 @@ async function dvLoad() {
     document.getElementById('dv-print-date').textContent = dateLabel;
 
     // 최근내원일 / 다음내원일 — 진료 저장 시 약물과 내원일이 동시에 저장되므로 잠시 후 한 번 더 갱신
-    await dvLoadVisitBadges(chartNo);
+    document.getElementById('dv-last-visit').textContent = '—';
+    document.getElementById('dv-next-visit').textContent = '—';
+    dvLoadVisitBadges(chartNo);
     setTimeout(function(){ dvLoadVisitBadges(chartNo); }, 1500);
 
     // 테이블 렌더 (크기 조절 클래스 적용)

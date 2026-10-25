@@ -1,6 +1,116 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script id="hg-auth">
+/* 한강의원 공통 로그인 (Supabase Auth) — 직원 기기는 한 번 로그인하면 자동 유지 */
+(function(){
+  var URL='https://rurbfcocihvapbtdzbyt.supabase.co', KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1cmJmY29jaWh2YXBidGR6Ynl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTUzMzQsImV4cCI6MjA5MjUzMTMzNH0.Y89bwZlS5ciqfhF9IRbF8oGa9CmFRsP6msFbp7DVypc', LS='hg_auth_v1', DOMAIN='@hangang.app', PATIENT=true, DEFAULT_ID='doctor';
+  var origFetch=window.fetch.bind(window);
+  var patientMode=false; ['#result-'].forEach(function(p){ if(location.hash.indexOf(p)===0) patientMode=true; });
+  function load(){try{return JSON.parse(localStorage.getItem(LS)||'null');}catch(e){return null;}}
+  function save(s){try{if(s)localStorage.setItem(LS,JSON.stringify(s));else localStorage.removeItem(LS);}catch(e){}}
+  var mem=load();
+  function nowSec(){return Math.floor(Date.now()/1000);}
+  var refreshing=null;
+  function refresh(){
+    if(refreshing) return refreshing;
+    refreshing=(async function(){
+      var cur=load()||mem; if(!cur||!cur.refresh_token) return null;
+      var r;
+      try{ r=await origFetch(URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:cur.refresh_token})}); }
+      catch(e){ return null; }
+      if(!r.ok){
+        if(r.status>=400&&r.status<500){
+          var other=load(); // 다른 탭이 이미 갱신했으면 그 값을 사용
+          if(other&&other.refresh_token!==cur.refresh_token){mem=other;return other;}
+          save(null);mem=null;showLogin();
+        }
+        return null;
+      }
+      var j=await r.json();
+      var s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||(nowSec()+(j.expires_in||3600)),email:(j.user&&j.user.email)||cur.email};
+      save(s);mem=s;return s;
+    })().then(function(v){refreshing=null;return v;},function(e){refreshing=null;return null;});
+    return refreshing;
+  }
+  async function getToken(){
+    var s=load()||mem; if(!s) return null;
+    if(s.expires_at-nowSec()<90){ var n=await refresh(); if(n) return n.access_token; s=load()||mem; }
+    return s?s.access_token:null;
+  }
+  function needsAuth(u){return u.indexOf(URL+'/rest/v1')===0||u.indexOf(URL+'/storage/v1')===0;}
+  window.fetch=async function(input,init){
+    var u=typeof input==='string'?input:(input&&input.url)||'';
+    var used=false;
+    if(!patientMode && needsAuth(u)){
+      var t=await getToken();
+      if(t){
+        var h=new Headers((init&&init.headers)||(typeof input!=='string'&&input&&input.headers)||undefined);
+        var a=h.get('Authorization');
+        if(!a||/^Bearer /i.test(a)){h.set('Authorization','Bearer '+t);}
+        init=Object.assign({},init||{},{headers:h});used=true;
+      }
+    }
+    var res=await origFetch(input,init);
+    if(used&&res.status===401){
+      var n=await refresh();
+      if(n){var h2=new Headers(init.headers);h2.set('Authorization','Bearer '+n.access_token);return origFetch(input,Object.assign({},init,{headers:h2}));}
+    }
+    return res;
+  };
+  window.hgHasSession=function(){return !!(load()||mem);};
+  window.hgEmail=function(){var s=load()||mem;return s?s.email:'';};
+  window.hgLogout=function(){ if(!confirm('로그아웃 할까요?'))return; save(null);mem=null;location.reload(); };
+
+  var LABELS={doctor:'원장 (doctor)',desk:'접수 (desk)',pad:'패드·검사PC (pad)'};
+  function showLogin(){
+    if(patientMode) return;
+    if(document.getElementById('hg-login')) return;
+    function build(){
+      if(document.getElementById('hg-login')) return;
+      var last=''; try{last=localStorage.getItem('hg_last_id')||'';}catch(e){}
+      var sel=last||DEFAULT_ID;
+      var d=document.createElement('div'); d.id='hg-login';
+      d.style.cssText='position:fixed;inset:0;z-index:2147483600;background:linear-gradient(135deg,#1a1d2e,#2d3154);display:flex;align-items:center;justify-content:center;font-family:"Noto Sans KR",system-ui,sans-serif;';
+      d.innerHTML='<div style="background:#fff;border-radius:16px;padding:28px 26px;width:min(340px,90vw);box-shadow:0 12px 40px rgba(0,0,0,.4);">'
+        +'<div style="font-size:19px;font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:4px;">🔐 한강의원 로그인</div>'
+        +'<div style="font-size:12px;color:#888;text-align:center;margin-bottom:16px;">직원 계정으로 로그인하세요</div>'
+        +'<select id="hg-id" style="width:100%;padding:11px;font-size:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:10px;">'
+        +Object.keys(LABELS).map(function(k){return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+LABELS[k]+'</option>';}).join('')+'</select>'
+        +'<input id="hg-pw" type="password" placeholder="비밀번호" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:11px;font-size:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:10px;">'
+        +'<button id="hg-go" style="width:100%;padding:12px;font-size:15px;font-weight:700;background:#1a3a5c;color:#fff;border:none;border-radius:8px;cursor:pointer;">로그인</button>'
+        +'<div id="hg-err" style="color:#c0392b;font-size:12.5px;text-align:center;margin-top:10px;min-height:16px;"></div></div>';
+      document.body.appendChild(d);
+      var pw=d.querySelector('#hg-pw'), err=d.querySelector('#hg-err'), go=d.querySelector('#hg-go');
+      async function doLogin(){
+        var id=d.querySelector('#hg-id').value;
+        err.textContent=''; go.disabled=true; go.textContent='확인 중...';
+        try{
+          var r=await origFetch(URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:id+DOMAIN,password:pw.value})});
+          var j=await r.json();
+          if(!r.ok) throw new Error(r.status===400?'아이디 또는 비밀번호가 올바르지 않습니다.':(j.error_description||j.msg||'로그인 실패'));
+          var s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||(nowSec()+(j.expires_in||3600)),email:(j.user&&j.user.email)||(id+DOMAIN)};
+          save(s);mem=s; try{localStorage.setItem('hg_last_id',id);}catch(e){}
+          location.reload();
+        }catch(e){ err.textContent=e.message; go.disabled=false; go.textContent='로그인'; pw.value=''; pw.focus(); }
+      }
+      go.onclick=doLogin; pw.onkeydown=function(ev){if(ev.key==='Enter')doLogin();};
+      setTimeout(function(){pw.focus();},100);
+    }
+    if(document.body) build(); else document.addEventListener('DOMContentLoaded',build);
+  }
+  function chip(){
+    if(patientMode||!(load()||mem)) return;
+    var c=document.createElement('div'); c.id='hg-chip';
+    c.textContent='🔓 '+((load()||mem).email||'').replace(DOMAIN,'');
+    c.title='로그아웃'; c.onclick=function(){window.hgLogout();};
+    c.style.cssText='position:fixed;left:6px;bottom:4px;z-index:2147483000;font:11px system-ui;color:#fff;background:rgba(26,58,92,.55);padding:2px 8px;border-radius:10px;cursor:pointer;opacity:.55;';
+    document.body.appendChild(c);
+  }
+  document.addEventListener('DOMContentLoaded',function(){ if(!patientMode && !(load()||mem)) showLogin(); else chip(); });
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>정신건강 검사 관리자</title>
@@ -943,7 +1053,7 @@ async function issueLink(type){
   if(selScales.size===0){toast('검사지를 1개 이상 선택하세요.');return;}
   const name=document.getElementById('pt-name-inp').value.trim();
   if(!name){toast('환자 이름 또는 번호를 입력하세요.');return;}
-  const sid='s-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
+  const _rb=new Uint8Array(16);crypto.getRandomValues(_rb);const sid='s-'+Array.from(_rb,b=>b.toString(16).padStart(2,'0')).join('');
   const{error}=await sb.from('sessions').insert({id:sid,patient_name:name,scales:[...selScales],status:'대기중'});
   if(error){toast('오류: '+error.message);return;}
   const userUrl=getUserBase()+'#s-'+sid;
@@ -1888,8 +1998,8 @@ document.addEventListener('DOMContentLoaded',async function(){
 });
 
 async function showResultPage(sid){
-  const{data:sess}=await sb.from('sessions').select('*').eq('id',sid).single();
-  const{data:results}=await sb.from('results').select('*').eq('session_id',sid);
+  const{data:rp}=await sb.rpc('get_result_page',{p_sid:sid});
+  const sess=rp&&rp.session, results=rp&&rp.results;
   if(!sess||!results||results.length===0){
     document.body.innerHTML='<div style="text-align:center;padding:3rem;font-family:sans-serif;color:#888">결과를 찾을 수 없습니다.</div>';
     return;

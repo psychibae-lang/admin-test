@@ -59,6 +59,7 @@
     return res;
   };
   window.hgHasSession=function(){return !!(load()||mem);};
+  window.hgGetToken=getToken;
   window.hgEmail=function(){var s=load()||mem;return s?s.email:'';};
   window.hgLogout=function(){ if(!confirm('로그아웃 할까요?'))return; save(null);mem=null;location.reload(); };
 
@@ -942,7 +943,18 @@ const CATEGORIES=[
 
 const SB_URL='https://rurbfcocihvapbtdzbyt.supabase.co';
 const SB_KEY='sb_publishable_YuyR-f-1MNYl94StDUP8Mw_L_35j3QN';
-const sb=supabase.createClient(SB_URL,SB_KEY);
+// accessToken: Realtime 웹소켓이 매 연결·하트비트마다 로그인 토큰을 쓰도록 (없으면 익명 키)
+// Realtime 은 fetch 가로채기를 거치지 않아서, 토큰을 안 넘기면 익명 권한 → RLS 때문에 drugs/visits 변경 이벤트가 안 옴
+const sb=supabase.createClient(SB_URL,SB_KEY,{accessToken: async function(){
+  try{ return (window.hgGetToken && await window.hgGetToken()) || SB_KEY; }catch(e){ return SB_KEY; }
+}});
+function hgSyncRealtimeAuth(){
+  var p = window.hgGetToken ? window.hgGetToken() : Promise.resolve(null);
+  return Promise.resolve(p).then(function(t){
+    if (t) return sb.realtime.setAuth(t);
+  }).catch(function(e){ console.warn('realtime 인증 실패', e); });
+}
+setInterval(hgSyncRealtimeAuth, 5*60*1000);
 const TAG_CLS={dep:'tag-dep',anx:'tag-anx',ocd:'tag-ocd',ptsd:'tag-ptsd',other:'tag-other',clin:'tag-clin'};
 
 // 임상가 척도 (clinical)
@@ -2962,7 +2974,7 @@ function initDrugViewTab() {
 }
 
 // 페이지 열자마자 전체 감시 시작
-window.addEventListener('DOMContentLoaded', function(){ dvStartRealtime(''); });
+window.addEventListener('DOMContentLoaded', function(){ hgSyncRealtimeAuth().then(function(){ dvStartRealtime(''); }); });
 
 // ── 토스트 알림 ──────────────────────────────────────
 function showToast(msg, duration) {
@@ -3055,7 +3067,7 @@ function dvStartRealtime(chartNo) {
         badge.style.color = '#dc2626';
         setTimeout(function() {
           if (_dvRealtimeChannel) { sb.removeChannel(_dvRealtimeChannel); _dvRealtimeChannel = null; }
-          dvStartRealtime(_dvLastChartNo || '');
+          hgSyncRealtimeAuth().then(function(){ dvStartRealtime(_dvLastChartNo || ''); });
         }, 5000);
       }
     });
